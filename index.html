@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>US Citizenship Civics Test</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-dark: #2563eb;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 680px;
+    }
+
+    /* ── Screens ── */
+    .screen { display: none; flex-direction: column; align-items: center; gap: 24px; }
+    .screen.active { display: flex; }
+
+    /* ── Home ── */
+    .logo {
+      font-size: 3rem;
+      line-height: 1;
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      text-align: center;
+    }
+    .subtitle {
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+    }
+    .mode-cards {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .mode-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 24px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: left;
+    }
+    .mode-card:hover {
+      border-color: var(--accent);
+      background: #1e3050;
+    }
+    .mode-card h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .mode-card p {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .mode-card .badge {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      width: 100%;
+    }
+
+    /* ── Progress ── */
+    .progress-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-bar-wrap {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width 0.3s;
+    }
+    .score-badge {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ── Question ── */
+    .q-meta {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+    .q-num {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .q-text {
+      font-size: 1.3rem;
+      font-weight: 600;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-dark); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+    .btn-error {
+      background: var(--error);
+      color: white;
+    }
+
+    /* ── Mic button ── */
+    .mic-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 0;
+    }
+    .mic-btn {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      transition: all 0.2s;
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 0 0 0 rgba(59,130,246,0.4);
+    }
+    .mic-btn.listening {
+      background: var(--error);
+      animation: pulse 1.2s infinite;
+    }
+    .mic-btn.processing {
+      background: var(--warning);
+      cursor: not-allowed;
+    }
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+      70%  { box-shadow: 0 0 0 20px rgba(239,68,68,0); }
+      100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+    }
+    .mic-label {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .transcript-box {
+      width: 100%;
+      min-height: 60px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-style: italic;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .transcript-box.has-text {
+      color: var(--text);
+      font-style: normal;
+    }
+
+    /* ── Result ── */
+    .result-icon {
+      font-size: 3.5rem;
+      text-align: center;
+    }
+    .result-label {
+      font-size: 1.4rem;
+      font-weight: 700;
+      text-align: center;
+    }
+    .result-label.correct { color: var(--success); }
+    .result-label.incorrect { color: var(--error); }
+    .result-label.self-eval { color: var(--warning); }
+
+    .what-you-said {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border-radius: 12px;
+      padding: 12px 16px;
+    }
+    .what-you-said .label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+    .what-you-said .said-text {
+      font-size: 0.95rem;
+    }
+
+    .accepted-answers {
+      width: 100%;
+    }
+    .accepted-answers .label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .answer-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .answer-tag {
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.3);
+      color: #86efac;
+      font-size: 0.8rem;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+
+    .self-eval-note {
+      width: 100%;
+      background: rgba(245,158,11,0.08);
+      border: 1px solid rgba(245,158,11,0.25);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 0.9rem;
+      color: #fcd34d;
+      line-height: 1.6;
+    }
+
+    /* ── Complete ── */
+    .score-circle {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 6px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .score-circle.pass { border-color: var(--success); }
+    .score-circle.fail { border-color: var(--error); }
+    .score-circle .score-num {
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .score-circle .score-denom {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .pass-fail {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .pass-fail.pass { color: var(--success); }
+    .pass-fail.fail { color: var(--error); }
+
+    .stats-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .stat-box {
+      background: rgba(255,255,255,0.04);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat-box .stat-val {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+    .stat-box .stat-lbl {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .stat-box.green .stat-val { color: var(--success); }
+    .stat-box.red .stat-val { color: var(--error); }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+    }
+
+    /* ── TTS indicator ── */
+    .tts-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .tts-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    hr.divider {
+      width: 100%;
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══════════════ HOME SCREEN ═══════════════ -->
+  <div id="home-screen" class="screen active">
+    <div class="logo">🇺🇸</div>
+    <h1>US Citizenship Civics Test</h1>
+    <p class="subtitle">
+      Practice the 128 official 2025 USCIS civics questions.<br>
+      Questions are read aloud — answer verbally using your microphone.
+    </p>
+    <div class="mode-cards">
+      <div class="mode-card" onclick="startTest('standard')">
+        <div class="badge">Official Format</div>
+        <h3>Standard Test — 20 Questions</h3>
+        <p>Random 20 questions from all 128. Need 12 correct (60%) to pass.</p>
+      </div>
+      <div class="mode-card" onclick="startTest('senior')">
+        <div class="badge">65/20 Special</div>
+        <h3>Senior Test — 20 Asterisk Questions</h3>
+        <p>The 20 questions for applicants 65+ with 20+ years as a permanent resident. Need 6 correct (60%) to pass.</p>
+      </div>
+      <div class="mode-card" onclick="startTest('practice')">
+        <div class="badge">Practice</div>
+        <h3>Practice All — 128 Questions</h3>
+        <p>Go through all 128 questions to study. No pass/fail threshold.</p>
+      </div>
+    </div>
+    <p class="subtitle" style="font-size:0.78rem;">
+      ⚠️ Requires Chrome or Edge for microphone/speech features.<br>
+      Run via <code style="background:#1e293b;padding:1px 6px;border-radius:4px;">python3 -m http.server 8080</code> and open <code style="background:#1e293b;padding:1px 6px;border-radius:4px;">localhost:8080</code>
+    </p>
+  </div>
+
+  <!-- ═══════════════ QUESTION SCREEN ═══════════════ -->
+  <div id="question-screen" class="screen">
+    <div class="progress-row" style="width:100%">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+      <div class="score-badge" id="score-display">0 / 0</div>
+    </div>
+
+    <div class="card">
+      <div class="q-meta" id="q-category"></div>
+      <div class="q-num" id="q-num"></div>
+      <div class="q-text" id="q-text"></div>
+
+      <div id="tts-row" class="tts-indicator" style="margin-bottom:20px; display:none;">
+        <div class="tts-dot"></div>
+        <span>Reading question aloud…</span>
+      </div>
+
+      <div class="mic-area" id="mic-area">
+        <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
+        <div class="mic-label" id="mic-label">Tap to answer</div>
+      </div>
+
+      <div class="transcript-box" id="transcript">Your spoken answer will appear here…</div>
+
+      <div class="controls" style="margin-top:16px;">
+        <button class="btn btn-primary" id="submit-btn" onclick="submitAnswer()" disabled>Check Answer</button>
+        <button class="btn btn-ghost" onclick="rereadQuestion()">🔊 Re-read</button>
+        <button class="btn btn-ghost" onclick="skipQuestion()" id="skip-btn">Skip →</button>
+      </div>
+
+      <div id="self-eval-area" style="display:none; margin-top:16px;">
+        <div class="self-eval-note" id="self-eval-note"></div>
+        <div class="controls" style="margin-top:12px;">
+          <button class="btn btn-success" onclick="selfEval(true)">✓ I said it correctly</button>
+          <button class="btn btn-error" onclick="selfEval(false)">✗ I didn't</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ RESULT SCREEN ═══════════════ -->
+  <div id="result-screen" class="screen">
+    <div class="card" style="gap:16px; display:flex; flex-direction:column; align-items:center;">
+      <div class="result-icon" id="result-icon"></div>
+      <div class="result-label" id="result-label"></div>
+
+      <hr class="divider">
+
+      <div class="what-you-said" id="you-said-box">
+        <div class="label">You said</div>
+        <div class="said-text" id="you-said-text"></div>
+      </div>
+
+      <div class="accepted-answers" id="accepted-box">
+        <div class="label">Accepted answers</div>
+        <div class="answer-tags" id="answer-tags"></div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="controls">
+        <button class="btn btn-primary" onclick="nextQuestion()" id="next-btn">Next Question →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ COMPLETE SCREEN ═══════════════ -->
+  <div id="complete-screen" class="screen">
+    <div class="logo">🎉</div>
+    <h1 id="complete-title">Test Complete!</h1>
+
+    <div class="score-circle" id="score-circle">
+      <div class="score-num" id="final-score-num"></div>
+      <div class="score-denom" id="final-score-denom"></div>
+    </div>
+
+    <div class="pass-fail" id="pass-fail-label"></div>
+    <p class="subtitle" id="complete-subtitle"></p>
+
+    <div class="stats-grid">
+      <div class="stat-box green">
+        <div class="stat-val" id="stat-correct">0</div>
+        <div class="stat-lbl">Correct</div>
+      </div>
+      <div class="stat-box red">
+        <div class="stat-val" id="stat-incorrect">0</div>
+        <div class="stat-lbl">Incorrect</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="stat-skipped">0</div>
+        <div class="stat-lbl">Skipped</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="showHome()">New Test</button>
+      <button class="btn btn-ghost" onclick="reviewMissed()" id="review-btn">Review Missed</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// QUESTIONS DATA
+// ══════════════════════════════════════════════════════════════
+// Format: { id, q, a: string[], cat, asterisk, min, selfEval, selfEvalNote }
+// min = minimum number of distinct correct answers needed
+
+const QUESTIONS = [
+  // ── A: Principles of American Government ──
+  { id:1, q:"What is the form of government of the United States?", a:["republic","constitution-based federal republic","representative democracy"], cat:"Principles of American Government", asterisk:false, min:1 },
+  { id:2, q:"What is the supreme law of the land?", a:["the constitution","us constitution","u.s. constitution"], cat:"Principles of American Government", asterisk:true, min:1 },
+  { id:3, q:"Name one thing the U.S. Constitution does.", a:["forms the government","defines powers of government","defines the parts of government","protects the rights of the people"], cat:"Principles of American Government", asterisk:false, min:1 },
+  { id:4, q:'The U.S. Constitution starts with the words "We the People." What does "We the People" mean?', a:["self-government","self government","popular sovereignty","consent of the governed","people should govern themselves","social contract"], cat:"Principles of American Government", asterisk:false, min:1 },
+  { id:5, q:"How are changes made to the U.S. Constitution?", a:["amendments","the amendment process"], cat:"Principles of American Government", asterisk:false, min:1 },
+  { id:6, q:"What does the Bill of Rights protect?", a:["the basic rights of americans","the basic rights of people living in the united states","rights of americans","rights of the people"], cat:"Principles of American Government", asterisk:false, min:1 },
+  { id:7, q:"How many amendments does the U.S. Constitution have?", a:["twenty-seven","twenty seven","27"], cat:"Principles of American Government", asterisk:true, min:1 },
+  { id:8, q:"Why is the Declaration of Independence important?", a:["america is free from british control","free from britain","all people are created equal","identifies inherent rights","identifies individual freedoms"], cat:"Principles of American Government", asterisk:false, min:1 },
+  { id:9, q:"What founding document said the American colonies were free from Britain?", a:["declaration of independence"], cat:"Principles of American Government", asterisk:false, min:1 },
+  { id:10, q:"Name two important ideas from the Declaration of Independence and the U.S. Constitution.", a:["equality","liberty","social contract","natural rights","limited government","self-government","self government"], cat:"Principles of American Government", asterisk:false, min:2 },
+  { id:11, q:'The words "Life, Liberty, and the pursuit of Happiness" are in what founding document?', a:["declaration of independence"], cat:"Principles of American Government", asterisk:false, min:1 },
+  { id:12, q:"What is the economic system of the United States?", a:["capitalism","free market economy","free market"], cat:"Principles of American Government", asterisk:true, min:1 },
+  { id:13, q:"What is the rule of law?", a:["everyone must follow the law","leaders must obey the law","government must obey the law","no one is above the law"], cat:"Principles of American Government", asterisk:false, min:1 },
+  { id:14, q:"Many documents influenced the U.S. Constitution. Name one.", a:["declaration of independence","articles of confederation","federalist papers","anti-federalist papers","virginia declaration of rights","fundamental orders of connecticut","mayflower compact","iroquois great law of peace"], cat:"Principles of American Government", asterisk:false, min:1 },
+  { id:15, q:"There are three branches of government. Why?", a:["so one part does not become too powerful","checks and balances","separation of powers"], cat:"Principles of American Government", asterisk:false, min:1 },
+
+  // ── B: System of Government ──
+  { id:16, q:"Name the three branches of government.", a:["legislative executive and judicial","congress president and the courts","legislative","executive","judicial"], cat:"System of Government", asterisk:false, min:1 },
+  { id:17, q:"The President of the United States is in charge of which branch of government?", a:["executive branch","executive"], cat:"System of Government", asterisk:false, min:1 },
+  { id:18, q:"What part of the federal government writes laws?", a:["congress","legislature","legislative branch","the legislature"], cat:"System of Government", asterisk:false, min:1 },
+  { id:19, q:"What are the two parts of the U.S. Congress?", a:["senate and house of representatives","senate and house","the senate and the house"], cat:"System of Government", asterisk:false, min:1 },
+  { id:20, q:"Name one power of the U.S. Congress.", a:["writes laws","declares war","makes the federal budget"], cat:"System of Government", asterisk:true, min:1 },
+  { id:21, q:"How many U.S. senators are there?", a:["one hundred","100"], cat:"System of Government", asterisk:false, min:1 },
+  { id:22, q:"How long is a term for a U.S. senator?", a:["six years","6 years","six"], cat:"System of Government", asterisk:false, min:1 },
+  { id:23, q:"Who is one of your state's U.S. senators now?", a:[], cat:"System of Government", asterisk:false, min:1, selfEval:true, selfEvalNote:"This answer varies by state. Say the name of one of your U.S. senators. Mark yourself correct if you named a sitting senator from your state." },
+  { id:24, q:"How many voting members are in the House of Representatives?", a:["four hundred thirty-five","four hundred thirty five","435"], cat:"System of Government", asterisk:false, min:1 },
+  { id:25, q:"How long is a term for a member of the House of Representatives?", a:["two years","2 years","two"], cat:"System of Government", asterisk:false, min:1 },
+  { id:26, q:"Why do U.S. representatives serve shorter terms than U.S. senators?", a:["to more closely follow public opinion","follow public opinion","reflect public opinion"], cat:"System of Government", asterisk:false, min:1 },
+  { id:27, q:"How many senators does each state have?", a:["two","2"], cat:"System of Government", asterisk:false, min:1 },
+  { id:28, q:"Why does each state have two senators?", a:["equal representation for small states","equal representation","the great compromise","connecticut compromise"], cat:"System of Government", asterisk:false, min:1 },
+  { id:29, q:"Name your U.S. representative.", a:[], cat:"System of Government", asterisk:false, min:1, selfEval:true, selfEvalNote:"This answer varies by congressional district. Say the name of your U.S. House representative. Mark yourself correct if you named your current representative." },
+  { id:30, q:"What is the name of the Speaker of the House of Representatives now?", a:["mike johnson","johnson"], cat:"System of Government", asterisk:true, min:1 },
+  { id:31, q:"Who does a U.S. senator represent?", a:["citizens of their state","people of their state","all citizens of their state"], cat:"System of Government", asterisk:false, min:1 },
+  { id:32, q:"Who elects U.S. senators?", a:["citizens from their state","voters of their state","people of their state"], cat:"System of Government", asterisk:false, min:1 },
+  { id:33, q:"Who does a member of the House of Representatives represent?", a:["citizens in their congressional district","people in their district","citizens in their district"], cat:"System of Government", asterisk:false, min:1 },
+  { id:34, q:"Who elects members of the House of Representatives?", a:["citizens from their congressional district","citizens in their district","voters in their district"], cat:"System of Government", asterisk:false, min:1 },
+  { id:35, q:"Some states have more representatives than other states. Why?", a:["the state's population","they have more people","some states have more people","based on population"], cat:"System of Government", asterisk:false, min:1 },
+  { id:36, q:"The President of the United States is elected for how many years?", a:["four years","4 years","four"], cat:"System of Government", asterisk:true, min:1 },
+  { id:37, q:"The President of the United States can serve only two terms. Why?", a:["the 22nd amendment","22nd amendment","to keep the president from becoming too powerful","prevent president from becoming too powerful"], cat:"System of Government", asterisk:false, min:1 },
+  { id:38, q:"What is the name of the President of the United States now?", a:["donald trump","trump"], cat:"System of Government", asterisk:true, min:1 },
+  { id:39, q:"What is the name of the Vice President of the United States now?", a:["jd vance","j.d. vance","vance"], cat:"System of Government", asterisk:true, min:1 },
+  { id:40, q:"If the president can no longer serve, who becomes president?", a:["the vice president","vice president"], cat:"System of Government", asterisk:false, min:1 },
+  { id:41, q:"Name one power of the president.", a:["signs bills into law","vetoes bills","enforces laws","commander in chief","chief diplomat","appoints federal judges"], cat:"System of Government", asterisk:false, min:1 },
+  { id:42, q:"Who is Commander in Chief of the U.S. military?", a:["the president","president of the united states"], cat:"System of Government", asterisk:false, min:1 },
+  { id:43, q:"Who signs bills to become laws?", a:["the president","president of the united states"], cat:"System of Government", asterisk:false, min:1 },
+  { id:44, q:"Who vetoes bills?", a:["the president","president of the united states"], cat:"System of Government", asterisk:true, min:1 },
+  { id:45, q:"Who appoints federal judges?", a:["the president","president of the united states"], cat:"System of Government", asterisk:false, min:1 },
+  { id:46, q:"The executive branch has many parts. Name one.", a:["president","cabinet","federal departments and agencies","federal agencies"], cat:"System of Government", asterisk:false, min:1 },
+  { id:47, q:"What does the President's Cabinet do?", a:["advises the president","advise the president"], cat:"System of Government", asterisk:false, min:1 },
+  { id:48, q:"What are two Cabinet-level positions?", a:["attorney general","secretary of agriculture","secretary of commerce","secretary of education","secretary of energy","secretary of health and human services","secretary of homeland security","secretary of housing and urban development","secretary of the interior","secretary of labor","secretary of state","secretary of transportation","secretary of the treasury","secretary of veterans affairs","secretary of defense","vice president","administrator of the environmental protection agency","administrator of the small business administration","director of the central intelligence agency","director of the office of management and budget","director of national intelligence","united states trade representative"], cat:"System of Government", asterisk:false, min:2 },
+  { id:49, q:"Why is the Electoral College important?", a:["it decides who is elected president","decides who is elected president","compromise between popular election and congressional selection","provides a compromise"], cat:"System of Government", asterisk:false, min:1 },
+  { id:50, q:"What is one part of the judicial branch?", a:["supreme court","federal courts"], cat:"System of Government", asterisk:false, min:1 },
+  { id:51, q:"What does the judicial branch do?", a:["reviews laws","explains laws","resolves disputes","decides if a law goes against the constitution"], cat:"System of Government", asterisk:false, min:1 },
+  { id:52, q:"What is the highest court in the United States?", a:["supreme court","the supreme court"], cat:"System of Government", asterisk:true, min:1 },
+  { id:53, q:"How many seats are on the Supreme Court?", a:["nine","9"], cat:"System of Government", asterisk:false, min:1 },
+  { id:54, q:"How many Supreme Court justices are usually needed to decide a case?", a:["five","5"], cat:"System of Government", asterisk:false, min:1 },
+  { id:55, q:"How long do Supreme Court justices serve?", a:["for life","lifetime appointment","until retirement"], cat:"System of Government", asterisk:false, min:1 },
+  { id:56, q:"Supreme Court justices serve for life. Why?", a:["to be independent","to limit outside influence","independent of politics"], cat:"System of Government", asterisk:false, min:1 },
+  { id:57, q:"Who is the Chief Justice of the United States now?", a:["john roberts","roberts"], cat:"System of Government", asterisk:false, min:1 },
+  { id:58, q:"Name one power that is only for the federal government.", a:["print paper money","mint coins","declare war","create an army","make treaties","set foreign policy"], cat:"System of Government", asterisk:false, min:1 },
+  { id:59, q:"Name one power that is only for the states.", a:["provide schooling and education","provide education","provide protection police","provide safety fire departments","give a driver's license","give a drivers license","approve zoning and land use"], cat:"System of Government", asterisk:false, min:1 },
+  { id:60, q:"What is the purpose of the 10th Amendment?", a:["powers not given to the federal government belong to the states or to the people","powers belong to the states","reserved powers belong to states"], cat:"System of Government", asterisk:false, min:1 },
+  { id:61, q:"Who is the governor of your state now?", a:[], cat:"System of Government", asterisk:true, min:1, selfEval:true, selfEvalNote:"This answer varies by state. Say the name of your current state governor. Mark yourself correct if you named your sitting governor." },
+  { id:62, q:"What is the capital of your state?", a:[], cat:"System of Government", asterisk:false, min:1, selfEval:true, selfEvalNote:"This answer varies by state. Say your state capital city. Mark yourself correct if you named the correct capital." },
+
+  // ── C: Rights and Responsibilities ──
+  { id:63, q:"There are four amendments to the U.S. Constitution about who can vote. Describe one of them.", a:["citizens eighteen and older can vote","18 and older can vote","you don't have to pay a poll tax to vote","no poll tax","any citizen can vote","women and men can vote","a male citizen of any race can vote"], cat:"Rights and Responsibilities", asterisk:false, min:1 },
+  { id:64, q:"Who can vote in federal elections, run for federal office, and serve on a jury in the United States?", a:["citizens","citizens of the united states","u.s. citizens","us citizens"], cat:"Rights and Responsibilities", asterisk:false, min:1 },
+  { id:65, q:"What are three rights of everyone living in the United States?", a:["freedom of expression","freedom of speech","freedom of assembly","freedom to petition the government","freedom of religion","the right to bear arms","right to bear arms"], cat:"Rights and Responsibilities", asterisk:false, min:3 },
+  { id:66, q:"What do we show loyalty to when we say the Pledge of Allegiance?", a:["the united states","the flag"], cat:"Rights and Responsibilities", asterisk:true, min:1 },
+  { id:67, q:"Name two promises that new citizens make in the Oath of Allegiance.", a:["give up loyalty to other countries","defend the constitution","obey the laws of the united states","serve in the military","serve the nation","be loyal to the united states"], cat:"Rights and Responsibilities", asterisk:false, min:2 },
+  { id:68, q:"How can people become United States citizens?", a:["be born in the united states","born in the united states","naturalize","naturalization","derive citizenship"], cat:"Rights and Responsibilities", asterisk:false, min:1 },
+  { id:69, q:"What are two examples of civic participation in the United States?", a:["vote","run for office","join a political party","help with a campaign","join a civic group","join a community group","give an elected official your opinion","contact elected officials","support or oppose an issue","write to a newspaper"], cat:"Rights and Responsibilities", asterisk:false, min:2 },
+  { id:70, q:"What is one way Americans can serve their country?", a:["vote","pay taxes","obey the law","serve in the military","run for office","work for local state or federal government","work for the government"], cat:"Rights and Responsibilities", asterisk:false, min:1 },
+  { id:71, q:"Why is it important to pay federal taxes?", a:["required by law","all people pay to fund the federal government","fund the federal government","required by the constitution","16th amendment","civic duty"], cat:"Rights and Responsibilities", asterisk:false, min:1 },
+  { id:72, q:"It is important for all men age 18 through 25 to register for the Selective Service. Name one reason why.", a:["required by law","civic duty","makes the draft fair"], cat:"Rights and Responsibilities", asterisk:false, min:1 },
+
+  // ── A: Colonial Period and Independence ──
+  { id:73, q:"The colonists came to America for many reasons. Name one.", a:["freedom","political liberty","religious freedom","economic opportunity","escape persecution"], cat:"Colonial Period & Independence", asterisk:false, min:1 },
+  { id:74, q:"Who lived in America before the Europeans arrived?", a:["american indians","native americans"], cat:"Colonial Period & Independence", asterisk:true, min:1 },
+  { id:75, q:"What group of people was taken and sold as slaves?", a:["africans","people from africa"], cat:"Colonial Period & Independence", asterisk:false, min:1 },
+  { id:76, q:"What war did the Americans fight to win independence from Britain?", a:["american revolution","the revolutionary war","war for american independence","war for independence"], cat:"Colonial Period & Independence", asterisk:false, min:1 },
+  { id:77, q:"Name one reason why the Americans declared independence from Britain.", a:["high taxes","taxation without representation","british soldiers stayed in american houses","quartering","did not have self-government","boston massacre","boston tea party","stamp act","sugar act","townshend acts","intolerable acts","coercive acts"], cat:"Colonial Period & Independence", asterisk:false, min:1 },
+  { id:78, q:"Who wrote the Declaration of Independence?", a:["thomas jefferson","jefferson"], cat:"Colonial Period & Independence", asterisk:true, min:1 },
+  { id:79, q:"When was the Declaration of Independence adopted?", a:["july 4 1776","july fourth 1776","1776"], cat:"Colonial Period & Independence", asterisk:false, min:1 },
+  { id:80, q:"The American Revolution had many important events. Name one.", a:["battle of bunker hill","bunker hill","declaration of independence","washington crossing the delaware","battle of trenton","battle of saratoga","saratoga","valley forge","battle of yorktown","yorktown","british surrender at yorktown"], cat:"Colonial Period & Independence", asterisk:false, min:1 },
+  { id:81, q:"There were 13 original states. Name five.", a:["new hampshire","massachusetts","rhode island","connecticut","new york","new jersey","pennsylvania","delaware","maryland","virginia","north carolina","south carolina","georgia"], cat:"Colonial Period & Independence", asterisk:false, min:5 },
+  { id:82, q:"What founding document was written in 1787?", a:["the constitution","us constitution","u.s. constitution"], cat:"Colonial Period & Independence", asterisk:false, min:1 },
+  { id:83, q:"The Federalist Papers supported the passage of the U.S. Constitution. Name one of the writers.", a:["james madison","madison","alexander hamilton","hamilton","john jay","jay","publius"], cat:"Colonial Period & Independence", asterisk:false, min:1 },
+  { id:84, q:"Why were the Federalist Papers important?", a:["helped people understand the constitution","supported passing the constitution"], cat:"Colonial Period & Independence", asterisk:false, min:1 },
+  { id:85, q:"Benjamin Franklin is famous for many things. Name one.", a:["founded the first free public libraries","first postmaster general","helped write the declaration of independence","inventor","u.s. diplomat","diplomat"], cat:"Colonial Period & Independence", asterisk:false, min:1 },
+  { id:86, q:"George Washington is famous for many things. Name one.", a:["father of our country","first president","general of the continental army","president of the constitutional convention"], cat:"Colonial Period & Independence", asterisk:true, min:1 },
+  { id:87, q:"Thomas Jefferson is famous for many things. Name one.", a:["writer of the declaration of independence","wrote the declaration of independence","third president","doubled the size of the united states","louisiana purchase","first secretary of state","founded the university of virginia","virginia statute on religious freedom"], cat:"Colonial Period & Independence", asterisk:false, min:1 },
+  { id:88, q:"James Madison is famous for many things. Name one.", a:["father of the constitution","fourth president","president during the war of 1812","one of the writers of the federalist papers","federalist papers"], cat:"Colonial Period & Independence", asterisk:false, min:1 },
+  { id:89, q:"Alexander Hamilton is famous for many things. Name one.", a:["first secretary of the treasury","one of the writers of the federalist papers","helped establish the first bank of the united states","aide to general george washington","member of the continental congress"], cat:"Colonial Period & Independence", asterisk:false, min:1 },
+
+  // ── B: 1800s ──
+  { id:90, q:"What territory did the United States buy from France in 1803?", a:["louisiana territory","louisiana"], cat:"1800s", asterisk:false, min:1 },
+  { id:91, q:"Name one war fought by the United States in the 1800s.", a:["war of 1812","mexican-american war","mexican american war","civil war","spanish-american war","spanish american war"], cat:"1800s", asterisk:false, min:1 },
+  { id:92, q:"Name the U.S. war between the North and the South.", a:["the civil war","civil war"], cat:"1800s", asterisk:false, min:1 },
+  { id:93, q:"The Civil War had many important events. Name one.", a:["fort sumter","emancipation proclamation","battle of vicksburg","vicksburg","battle of gettysburg","gettysburg","shermans march","surrender at appomattox","appomattox","battle of antietam","antietam","sharpsburg","lincoln was assassinated","lincoln assassinated"], cat:"1800s", asterisk:false, min:1 },
+  { id:94, q:"Abraham Lincoln is famous for many things. Name one.", a:["freed the slaves","emancipation proclamation","saved the union","preserved the union","led the united states during the civil war","16th president","delivered the gettysburg address","gettysburg address"], cat:"1800s", asterisk:true, min:1 },
+  { id:95, q:"What did the Emancipation Proclamation do?", a:["freed the slaves","freed slaves in the confederacy","freed slaves in the confederate states","freed slaves in most southern states"], cat:"1800s", asterisk:false, min:1 },
+  { id:96, q:"What U.S. war ended slavery?", a:["the civil war","civil war"], cat:"1800s", asterisk:false, min:1 },
+  { id:97, q:"What amendment says all persons born or naturalized in the United States are U.S. citizens?", a:["14th amendment","fourteenth amendment"], cat:"1800s", asterisk:false, min:1 },
+  { id:98, q:"When did all men get the right to vote?", a:["after the civil war","during reconstruction","the 15th amendment","15th amendment","1870"], cat:"1800s", asterisk:false, min:1 },
+  { id:99, q:"Name one leader of the women's rights movement in the 1800s.", a:["susan b anthony","susan b. anthony","elizabeth cady stanton","sojourner truth","harriet tubman","lucretia mott","lucy stone"], cat:"1800s", asterisk:false, min:1 },
+
+  // ── C: Recent American History ──
+  { id:100, q:"Name one war fought by the United States in the 1900s.", a:["world war i","world war 1","ww1","wwi","world war ii","world war 2","ww2","wwii","korean war","vietnam war","persian gulf war","gulf war"], cat:"Recent American History", asterisk:false, min:1 },
+  { id:101, q:"Why did the United States enter World War I?", a:["germany attacked us ships","germany attacked civilian ships","to support the allied powers","to oppose the central powers"], cat:"Recent American History", asterisk:false, min:1 },
+  { id:102, q:"When did all women get the right to vote?", a:["1920","after world war i","19th amendment","nineteenth amendment"], cat:"Recent American History", asterisk:false, min:1 },
+  { id:103, q:"What was the Great Depression?", a:["longest economic recession in modern history","longest economic recession","great economic recession"], cat:"Recent American History", asterisk:false, min:1 },
+  { id:104, q:"When did the Great Depression start?", a:["the great crash 1929","stock market crash of 1929","1929"], cat:"Recent American History", asterisk:false, min:1 },
+  { id:105, q:"Who was president during the Great Depression and World War II?", a:["franklin roosevelt","fdr","franklin d roosevelt","roosevelt"], cat:"Recent American History", asterisk:false, min:1 },
+  { id:106, q:"Why did the United States enter World War II?", a:["bombing of pearl harbor","japanese attacked pearl harbor","pearl harbor","to support the allied powers","to oppose the axis powers"], cat:"Recent American History", asterisk:false, min:1 },
+  { id:107, q:"Dwight Eisenhower is famous for many things. Name one.", a:["general during world war ii","general during world war 2","president at the end of the korean war","34th president","signed the federal-aid highway act","created the interstate system","interstate highway system"], cat:"Recent American History", asterisk:false, min:1 },
+  { id:108, q:"Who was the United States' main rival during the Cold War?", a:["soviet union","ussr","russia"], cat:"Recent American History", asterisk:false, min:1 },
+  { id:109, q:"During the Cold War, what was one main concern of the United States?", a:["communism","nuclear war"], cat:"Recent American History", asterisk:false, min:1 },
+  { id:110, q:"Why did the United States enter the Korean War?", a:["to stop the spread of communism","stop communism"], cat:"Recent American History", asterisk:false, min:1 },
+  { id:111, q:"Why did the United States enter the Vietnam War?", a:["to stop the spread of communism","stop communism"], cat:"Recent American History", asterisk:false, min:1 },
+  { id:112, q:"What did the civil rights movement do?", a:["fought to end racial discrimination","end racial discrimination","equal rights for black americans","racial equality"], cat:"Recent American History", asterisk:false, min:1 },
+  { id:113, q:"Martin Luther King, Jr. is famous for many things. Name one.", a:["fought for civil rights","civil rights","worked for equality for all americans","equality for all americans"], cat:"Recent American History", asterisk:true, min:1 },
+  { id:114, q:"Why did the United States enter the Persian Gulf War?", a:["to force the iraqi military from kuwait","force iraq from kuwait","iraqi military from kuwait","liberate kuwait"], cat:"Recent American History", asterisk:false, min:1 },
+  { id:115, q:"What major event happened on September 11, 2001 in the United States?", a:["terrorists attacked the united states","terrorists attacked","world trade center","plane crashed into the pentagon","crashed in a field in pennsylvania"], cat:"Recent American History", asterisk:true, min:1 },
+  { id:116, q:"Name one U.S. military conflict after the September 11, 2001 attacks.", a:["global war on terror","war on terror","war in afghanistan","war in iraq"], cat:"Recent American History", asterisk:false, min:1 },
+  { id:117, q:"Name one American Indian tribe in the United States.", a:["apache","blackfeet","cayuga","cherokee","cheyenne","chippewa","choctaw","creek","crow","hopi","huron","inupiat","lakota","mohawk","mohegan","navajo","oneida","onondaga","pueblo","seminole","seneca","shawnee","sioux","teton","tuscarora"], cat:"Recent American History", asterisk:false, min:1 },
+  { id:118, q:"Name one example of an American innovation.", a:["light bulb","automobile","cars","internal combustion engine","skyscrapers","airplane","assembly line","landing on the moon","moon landing","integrated circuit"], cat:"Recent American History", asterisk:false, min:1 },
+
+  // ── Symbols & Holidays ──
+  { id:119, q:"What is the capital of the United States?", a:["washington dc","washington d.c.","washington"], cat:"Symbols & Holidays", asterisk:false, min:1 },
+  { id:120, q:"Where is the Statue of Liberty?", a:["new york harbor","liberty island","new jersey","near new york city","on the hudson river","new york"], cat:"Symbols & Holidays", asterisk:false, min:1 },
+  { id:121, q:"Why does the flag have 13 stripes?", a:["13 original colonies","thirteen original colonies","represent the original colonies","because of the original colonies"], cat:"Symbols & Holidays", asterisk:true, min:1 },
+  { id:122, q:"Why does the flag have 50 stars?", a:["one star for each state","each star represents a state","50 states","fifty states"], cat:"Symbols & Holidays", asterisk:false, min:1 },
+  { id:123, q:"What is the name of the national anthem?", a:["the star-spangled banner","the star spangled banner","star spangled banner"], cat:"Symbols & Holidays", asterisk:false, min:1 },
+  { id:124, q:'The Nation\'s first motto was "E Pluribus Unum." What does that mean?', a:["out of many one","out of many, one","we all become one"], cat:"Symbols & Holidays", asterisk:false, min:1 },
+  { id:125, q:"What is Independence Day?", a:["a holiday to celebrate us independence from britain","celebrate independence from britain","independence from britain","the country's birthday","the countrys birthday"], cat:"Symbols & Holidays", asterisk:false, min:1 },
+  { id:126, q:"Name three national U.S. holidays.", a:["new years day","new year's day","martin luther king jr day","martin luther king day","presidents day","memorial day","juneteenth","independence day","labor day","columbus day","veterans day","thanksgiving day","thanksgiving","christmas day","christmas"], cat:"Symbols & Holidays", asterisk:true, min:3 },
+  { id:127, q:"What is Memorial Day?", a:["a holiday to honor soldiers who died in military service","honor soldiers who died","soldiers who died in military service"], cat:"Symbols & Holidays", asterisk:false, min:1 },
+  { id:128, q:"What is Veterans Day?", a:["a holiday to honor people in the us military","honor people in the military","honor people who have served in the military","honor veterans"], cat:"Symbols & Holidays", asterisk:false, min:1 },
+];
+
+const ASTERISK_IDS = QUESTIONS.filter(q => q.asterisk).map(q => q.id);
+
+// ══════════════════════════════════════════════════════════════
+// APP STATE
+// ══════════════════════════════════════════════════════════════
+let state = {
+  mode: null,          // 'standard' | 'senior' | 'practice'
+  queue: [],           // array of question objects to ask
+  currentIdx: 0,
+  correct: 0,
+  incorrect: 0,
+  skipped: 0,
+  currentTranscript: '',
+  micState: 'idle',    // 'idle' | 'listening' | 'processing'
+  recognition: null,
+  synth: window.speechSynthesis,
+  isSpeaking: false,
+};
+
+// ══════════════════════════════════════════════════════════════
+// ANSWER MATCHING
+// ══════════════════════════════════════════════════════════════
+function normalizeText(t) {
+  return t
+    .toLowerCase()
+    .replace(/['\u2018\u2019\u201c\u201d]/g, '')
+    .replace(/[-–—]/g, ' ')
+    .replace(/\btwenty[\s-]?seven\b/g, '27')
+    .replace(/\bone[\s-]?hundred\b/g, '100')
+    .replace(/\bfour[\s-]?hundred[\s-]?thirty[\s-]?five\b/g, '435')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function answerMatches(spokenNorm, acceptedAnswer) {
+  const aNorm = normalizeText(acceptedAnswer);
+  const aWords = aNorm.split(' ').filter(w => w.length > 1);
+  if (aWords.length === 0) return false;
+
+  // Direct inclusion check
+  if (spokenNorm.includes(aNorm)) return true;
+
+  // For single-word answers: must be present as whole word
+  if (aWords.length === 1) {
+    return new RegExp(`\\b${aWords[0]}\\b`).test(spokenNorm);
+  }
+
+  // For multi-word answers: require high overlap
+  const matchCount = aWords.filter(w => {
+    if (w.length <= 2) return true; // small words always count
+    return new RegExp(`\\b${w}\\b`).test(spokenNorm);
+  }).length;
+  const threshold = aWords.length <= 3 ? 0.67 : 0.6;
+  return matchCount / aWords.length >= threshold;
+}
+
+function checkAnswer(question, spokenText) {
+  if (question.selfEval) return null; // null = self-evaluate
+  const norm = normalizeText(spokenText);
+
+  if (question.min <= 1) {
+    return question.a.some(ans => answerMatches(norm, ans));
+  }
+
+  // Count distinct matches
+  let matched = 0;
+  const used = new Set();
+  for (const ans of question.a) {
+    if (!used.has(ans) && answerMatches(norm, ans)) {
+      used.add(ans);
+      matched++;
+    }
+  }
+  return matched >= question.min;
+}
+
+// ══════════════════════════════════════════════════════════════
+// SPEECH SYNTHESIS (TTS)
+// ══════════════════════════════════════════════════════════════
+function speak(text, onDone) {
+  state.synth.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'en-US';
+  utt.rate = 0.92;
+  utt.pitch = 1;
+
+  // Prefer US English voice
+  const voices = state.synth.getVoices();
+  const usVoice = voices.find(v => v.lang === 'en-US' && !v.localService === false)
+    || voices.find(v => v.lang === 'en-US')
+    || voices.find(v => v.lang.startsWith('en'));
+  if (usVoice) utt.voice = usVoice;
+
+  state.isSpeaking = true;
+  showTTSIndicator(true);
+
+  utt.onend = () => {
+    state.isSpeaking = false;
+    showTTSIndicator(false);
+    if (onDone) onDone();
+  };
+  utt.onerror = () => {
+    state.isSpeaking = false;
+    showTTSIndicator(false);
+    if (onDone) onDone();
+  };
+  state.synth.speak(utt);
+}
+
+function showTTSIndicator(show) {
+  const el = document.getElementById('tts-row');
+  if (el) el.style.display = show ? 'flex' : 'none';
+}
+
+// ══════════════════════════════════════════════════════════════
+// SPEECH RECOGNITION (STT)
+// ══════════════════════════════════════════════════════════════
+function initRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return null;
+
+  const r = new SpeechRecognition();
+  r.lang = 'en-US';
+  r.continuous = false;
+  r.interimResults = true;
+
+  r.onresult = (e) => {
+    let interim = '';
+    let final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) {
+        final += e.results[i][0].transcript;
+      } else {
+        interim += e.results[i][0].transcript;
+      }
+    }
+    const transcript = (final || interim).trim();
+    state.currentTranscript = transcript;
+    updateTranscript(transcript);
+  };
+
+  r.onend = () => {
+    if (state.micState === 'listening') {
+      setMicState('idle');
+      if (state.currentTranscript) {
+        document.getElementById('submit-btn').disabled = false;
+      }
+    }
+  };
+
+  r.onerror = (e) => {
+    console.warn('Speech recognition error:', e.error);
+    setMicState('idle');
+  };
+
+  return r;
+}
+
+function toggleMic() {
+  if (state.isSpeaking) {
+    state.synth.cancel();
+    state.isSpeaking = false;
+    showTTSIndicator(false);
+  }
+
+  if (state.micState === 'listening') {
+    state.recognition.stop();
+    setMicState('idle');
+    return;
+  }
+
+  if (state.micState === 'processing') return;
+
+  state.currentTranscript = '';
+  updateTranscript('');
+  document.getElementById('submit-btn').disabled = true;
+
+  if (!state.recognition) {
+    state.recognition = initRecognition();
+  }
+  if (!state.recognition) {
+    alert('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
+    return;
+  }
+
+  try {
+    state.recognition = initRecognition(); // reinit to avoid state issues
+    state.recognition.start();
+    setMicState('listening');
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function setMicState(s) {
+  state.micState = s;
+  const btn = document.getElementById('mic-btn');
+  const lbl = document.getElementById('mic-label');
+  if (!btn) return;
+  btn.className = 'mic-btn' + (s === 'listening' ? ' listening' : s === 'processing' ? ' processing' : '');
+  if (s === 'idle') { btn.textContent = '🎤'; lbl.textContent = 'Tap to answer'; }
+  else if (s === 'listening') { btn.textContent = '⏹'; lbl.textContent = 'Listening… tap to stop'; }
+  else if (s === 'processing') { btn.textContent = '⌛'; lbl.textContent = 'Processing…'; }
+}
+
+function updateTranscript(text) {
+  const el = document.getElementById('transcript');
+  if (!el) return;
+  if (text) {
+    el.textContent = text;
+    el.className = 'transcript-box has-text';
+    document.getElementById('submit-btn').disabled = false;
+  } else {
+    el.textContent = 'Your spoken answer will appear here…';
+    el.className = 'transcript-box';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showHome() {
+  state.synth.cancel();
+  if (state.recognition) try { state.recognition.stop(); } catch(e) {}
+  showScreen('home-screen');
+}
+
+// ══════════════════════════════════════════════════════════════
+// TEST FLOW
+// ══════════════════════════════════════════════════════════════
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startTest(mode) {
+  state.mode = mode;
+  state.currentIdx = 0;
+  state.correct = 0;
+  state.incorrect = 0;
+  state.skipped = 0;
+  state.currentTranscript = '';
+  state.micState = 'idle';
+
+  if (mode === 'standard') {
+    state.queue = shuffle(QUESTIONS).slice(0, 20);
+  } else if (mode === 'senior') {
+    state.queue = shuffle(QUESTIONS.filter(q => q.asterisk));
+  } else {
+    state.queue = shuffle(QUESTIONS);
+  }
+
+  showScreen('question-screen');
+  loadQuestion();
+}
+
+function loadQuestion() {
+  const q = currentQuestion();
+  const total = state.queue.length;
+  const idx = state.currentIdx;
+
+  // Reset mic state
+  if (state.recognition) try { state.recognition.stop(); } catch(e) {}
+  setMicState('idle');
+  state.currentTranscript = '';
+
+  // Progress
+  const pct = (idx / total) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('score-display').textContent = `${state.correct} / ${idx}`;
+
+  // Question text
+  document.getElementById('q-category').textContent = q.cat;
+  document.getElementById('q-num').textContent = `Question ${idx + 1} of ${total}`;
+  document.getElementById('q-text').textContent = q.q;
+
+  // Reset controls
+  document.getElementById('submit-btn').disabled = true;
+  document.getElementById('submit-btn').style.display = '';
+  document.getElementById('skip-btn').style.display = '';
+  updateTranscript('');
+
+  // Self-eval vs normal
+  const selfEvalArea = document.getElementById('self-eval-area');
+  const micArea = document.getElementById('mic-area');
+  if (q.selfEval) {
+    selfEvalArea.style.display = 'none'; // shown after mic interaction
+    micArea.style.display = 'flex';
+  } else {
+    selfEvalArea.style.display = 'none';
+    micArea.style.display = 'flex';
+  }
+
+  // Read question aloud after a brief delay
+  setTimeout(() => speak(q.q), 400);
+}
+
+function currentQuestion() {
+  return state.queue[state.currentIdx];
+}
+
+function submitAnswer() {
+  const q = currentQuestion();
+  const transcript = state.currentTranscript;
+
+  if (q.selfEval) {
+    showSelfEval(q);
+    return;
+  }
+
+  const result = checkAnswer(q, transcript);
+  showResult(result, transcript, q);
+}
+
+function showSelfEval(q) {
+  const selfEvalArea = document.getElementById('self-eval-area');
+  document.getElementById('self-eval-note').textContent = q.selfEvalNote;
+  document.getElementById('submit-btn').style.display = 'none';
+  document.getElementById('skip-btn').style.display = 'none';
+  selfEvalArea.style.display = 'block';
+}
+
+function selfEval(correct) {
+  const q = currentQuestion();
+  const transcript = state.currentTranscript || '(self-evaluated)';
+  showResult(correct, transcript, q);
+}
+
+function skipQuestion() {
+  state.synth.cancel();
+  if (state.recognition) try { state.recognition.stop(); } catch(e) {}
+  state.skipped++;
+  advanceOrComplete();
+}
+
+function showResult(correct, transcript, q) {
+  state.synth.cancel();
+  if (state.recognition) try { state.recognition.stop(); } catch(e) {}
+
+  if (correct === true) state.correct++;
+  else if (correct === false) state.incorrect++;
+
+  // Populate result screen
+  const icon = document.getElementById('result-icon');
+  const label = document.getElementById('result-label');
+  const youSaidBox = document.getElementById('you-said-box');
+  const youSaidText = document.getElementById('you-said-text');
+  const acceptedBox = document.getElementById('accepted-box');
+  const tagContainer = document.getElementById('answer-tags');
+
+  if (correct === true) {
+    icon.textContent = '✅';
+    label.textContent = 'Correct!';
+    label.className = 'result-label correct';
+  } else if (correct === false) {
+    icon.textContent = '❌';
+    label.textContent = 'Incorrect';
+    label.className = 'result-label incorrect';
+  } else {
+    icon.textContent = '🤔';
+    label.textContent = 'Self-Evaluated';
+    label.className = 'result-label self-eval';
+  }
+
+  youSaidText.textContent = transcript || '(nothing detected)';
+  youSaidBox.style.display = '';
+
+  if (q.selfEval) {
+    acceptedBox.style.display = 'none';
+  } else {
+    acceptedBox.style.display = '';
+    tagContainer.innerHTML = '';
+    const displayed = q.a.slice(0, 12); // cap at 12 tags
+    displayed.forEach(ans => {
+      const tag = document.createElement('span');
+      tag.className = 'answer-tag';
+      tag.textContent = titleCase(ans);
+      tagContainer.appendChild(tag);
+    });
+    if (q.a.length > 12) {
+      const more = document.createElement('span');
+      more.className = 'answer-tag';
+      more.style.background = 'rgba(148,163,184,0.1)';
+      more.style.borderColor = 'rgba(148,163,184,0.3)';
+      more.style.color = '#94a3b8';
+      more.textContent = `+${q.a.length - 12} more`;
+      tagContainer.appendChild(more);
+    }
+  }
+
+  // Update next button label
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = state.currentIdx + 1 < state.queue.length ? 'Next Question →' : 'See Results';
+
+  // Speak feedback
+  const feedbackText = correct === true ? 'Correct!' : correct === false ? 'Incorrect.' : '';
+  if (feedbackText) {
+    speak(feedbackText);
+  }
+
+  showScreen('result-screen');
+  state.currentIdx++;
+}
+
+function nextQuestion() {
+  if (state.currentIdx >= state.queue.length) {
+    showComplete();
+  } else {
+    showScreen('question-screen');
+    loadQuestion();
+  }
+}
+
+function advanceOrComplete() {
+  state.currentIdx++;
+  if (state.currentIdx >= state.queue.length) {
+    showComplete();
+  } else {
+    loadQuestion();
+  }
+}
+
+function rereadQuestion() {
+  const q = currentQuestion();
+  speak(q.q);
+}
+
+// ══════════════════════════════════════════════════════════════
+// COMPLETE SCREEN
+// ══════════════════════════════════════════════════════════════
+function showComplete() {
+  state.synth.cancel();
+  const total = state.correct + state.incorrect + state.skipped;
+  const answered = state.correct + state.incorrect;
+  const passThreshold = state.mode === 'senior' ? 0.6 : (state.mode === 'standard' ? 0.6 : null);
+  const minCorrect = state.mode === 'standard' ? 12 : state.mode === 'senior' ? 6 : null;
+  const passed = passThreshold !== null ? (state.correct >= (minCorrect || 0)) : null;
+
+  document.getElementById('final-score-num').textContent = state.correct;
+  document.getElementById('final-score-denom').textContent = `/ ${total}`;
+
+  const circle = document.getElementById('score-circle');
+  const pfLabel = document.getElementById('pass-fail-label');
+  const subtitle = document.getElementById('complete-subtitle');
+
+  if (passed === true) {
+    circle.className = 'score-circle pass';
+    pfLabel.textContent = 'PASS';
+    pfLabel.className = 'pass-fail pass';
+    subtitle.textContent = `You answered ${state.correct} correctly — great work!`;
+  } else if (passed === false) {
+    circle.className = 'score-circle fail';
+    pfLabel.textContent = 'FAIL';
+    pfLabel.className = 'pass-fail fail';
+    subtitle.textContent = `You needed ${minCorrect} correct but got ${state.correct}. Keep practicing!`;
+  } else {
+    circle.className = 'score-circle';
+    pfLabel.textContent = 'Practice Complete';
+    pfLabel.className = 'pass-fail';
+    subtitle.textContent = `You answered ${state.correct} out of ${answered} questions correctly.`;
+  }
+
+  document.getElementById('stat-correct').textContent = state.correct;
+  document.getElementById('stat-incorrect').textContent = state.incorrect;
+  document.getElementById('stat-skipped').textContent = state.skipped;
+
+  // Hide review button if no missed questions to review
+  document.getElementById('review-btn').style.display = state.incorrect > 0 ? '' : 'none';
+
+  showScreen('complete-screen');
+
+  const msg = passed === true ? 'Congratulations! You passed!'
+    : passed === false ? `You got ${state.correct} correct. You needed ${minCorrect}. Keep practicing!`
+    : `Practice complete. You got ${state.correct} correct.`;
+  setTimeout(() => speak(msg), 300);
+}
+
+function reviewMissed() {
+  // Restart but only with incorrectly answered questions
+  // For now, just restart in practice mode (full implementation would track missed questions)
+  alert('Review mode coming soon! For now, try Practice All to go through all questions.');
+}
+
+// ══════════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════════
+function titleCase(str) {
+  return str.replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// Load voices when available (Chrome fires voiceschanged event)
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => {};
+}
+</script>
+</body>
+</html>
