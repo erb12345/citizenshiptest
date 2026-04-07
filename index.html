@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>US Citizenship Civics Test</title>
+  <title>Lin's US Citizenship Civics Practice Test</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --border: #334155;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --muted: #64748b;
       --accent: #3b82f6;
       --accent-dark: #2563eb;
       --success: #22c55e;
@@ -48,7 +48,7 @@
       border-radius: 16px; padding: 18px 22px; cursor: pointer;
       transition: all 0.15s; text-align: left;
     }
-    .mode-card:hover { border-color: var(--accent); background: #1e3050; transform: translateY(-1px); }
+    .mode-card:hover { border-color: var(--accent); background: #eef4ff; transform: translateY(-1px); }
     .mode-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
     .mode-card p { font-size: 0.82rem; color: var(--muted); }
     .mode-card .badge {
@@ -190,7 +190,7 @@
     .mic-label { font-size: 0.82rem; color: var(--muted); }
 
     .transcript-box {
-      width: 100%; min-height: 56px; background: rgba(255,255,255,0.04);
+      width: 100%; min-height: 56px; background: rgba(0,0,0,0.03);
       border: 1px solid var(--border); border-radius: 12px;
       padding: 11px 15px; font-size: 0.92rem; font-style: italic;
       color: var(--muted); line-height: 1.5; transition: border-color 0.2s;
@@ -214,7 +214,7 @@
     .text-input-area { width: 100%; display: none; }
     .text-input-area.visible { display: block; }
     .text-input {
-      width: 100%; background: rgba(255,255,255,0.06);
+      width: 100%; background: rgba(0,0,0,0.03);
       border: 1px solid var(--border); border-radius: 12px;
       padding: 12px 15px; font-size: 0.95rem; color: var(--text);
       font-family: inherit; line-height: 1.5; resize: none;
@@ -228,7 +228,7 @@
       width: 100%; background: rgba(245,158,11,0.08);
       border: 1px solid rgba(245,158,11,0.25);
       border-radius: 12px; padding: 13px 15px;
-      font-size: 0.88rem; color: #fcd34d; line-height: 1.6;
+      font-size: 0.88rem; color: #92400e; line-height: 1.6;
     }
 
     /* ── Result ── */
@@ -238,7 +238,7 @@
     .result-label.incorrect { color: var(--error); }
     .result-label.self-eval { color: var(--warning); }
 
-    .what-you-said { width: 100%; background: rgba(255,255,255,0.04); border-radius: 12px; padding: 11px 15px; }
+    .what-you-said { width: 100%; background: rgba(0,0,0,0.03); border-radius: 12px; padding: 11px 15px; }
     .what-you-said .label,
     .accepted-answers .label,
     .cat-section .label,
@@ -252,8 +252,8 @@
     .accepted-answers { width: 100%; }
     .answer-tags { display: flex; flex-wrap: wrap; gap: 6px; }
     .answer-tag {
-      background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.28);
-      color: #86efac; font-size: 0.78rem; padding: 3px 10px; border-radius: 999px;
+      background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.35);
+      color: #15803d; font-size: 0.78rem; padding: 3px 10px; border-radius: 999px;
     }
 
     /* ── Complete ── */
@@ -273,7 +273,7 @@
     .pass-fail.fail { color: var(--error); }
 
     .stats-grid { width: 100%; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-    .stat-box { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 14px; text-align: center; }
+    .stat-box { background: rgba(0,0,0,0.03); border-radius: 12px; padding: 14px; text-align: center; }
     .stat-val { font-size: 1.4rem; font-weight: 700; }
     .stat-lbl { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
     .stat-box.green .stat-val { color: var(--success); }
@@ -296,8 +296,8 @@
     .achievement-chips { display: flex; flex-wrap: wrap; gap: 6px; }
     .achievement-chip {
       display: inline-flex; align-items: center; gap: 5px;
-      background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.25);
-      color: #d8b4fe; font-size: 0.78rem; padding: 4px 10px; border-radius: 999px;
+      background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.3);
+      color: #7c3aed; font-size: 0.78rem; padding: 4px 10px; border-radius: 999px;
     }
 
     /* ── Toast ── */
@@ -310,7 +310,7 @@
       background: var(--card); border: 1px solid rgba(168,85,247,0.4);
       border-radius: 14px; padding: 12px 16px;
       display: flex; align-items: center; gap: 10px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
       animation: toastIn 0.35s cubic-bezier(.36,.07,.19,.97);
       min-width: 220px; max-width: 300px;
       transition: opacity 0.4s;
@@ -335,7 +335,7 @@
   <!-- ═══════════════ HOME SCREEN ═══════════════ -->
   <div id="home-screen" class="screen active">
     <div class="logo">🇺🇸</div>
-    <h1>US Citizenship Civics Test</h1>
+    <h1>Lin's US Citizenship Civics Practice Test</h1>
     <p class="subtitle">
       Practice the 128 official 2025 USCIS civics questions.<br>
       Questions are read aloud — answer verbally using your microphone.
@@ -358,6 +358,7 @@
         <select id="voice-select" onchange="onVoiceChange()" style="
           flex:1; background:var(--card); color:var(--text); border:1px solid var(--border);
           border-radius:8px; padding:6px 10px; font-size:0.85rem; font-family:inherit; cursor:pointer;
+          outline:none;
         "></select>
         <button class="btn btn-ghost" onclick="previewVoice()" style="padding:6px 10px; font-size:0.8rem;">▶ Test</button>
       </label>
@@ -388,7 +389,7 @@
 
     <p class="subtitle" style="font-size:0.75rem;">
       ⚠️ Requires Chrome or Edge for microphone &amp; speech.<br>
-      Serve via <code style="background:#1e293b;padding:1px 6px;border-radius:4px;">python3 -m http.server 8080</code>
+      Serve via <code style="background:var(--border);padding:1px 6px;border-radius:4px;">python3 -m http.server 8080</code>
     </p>
   </div>
 
