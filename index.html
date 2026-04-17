@@ -26,9 +26,12 @@
       color: var(--text);
       min-height: 100vh;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 16px;
+      padding: 20px 16px 40px;
+    }
+    @media (min-height: 700px) {
+      body { align-items: center; }
     }
 
     .app { width: 100%; max-width: 680px; }
@@ -205,8 +208,8 @@
     }
     .input-mode-toggle button {
       background: none; border: 1px solid var(--border); color: var(--muted);
-      padding: 5px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer;
-      transition: all 0.15s; font-weight: 600;
+      padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; cursor: pointer;
+      transition: all 0.15s; font-weight: 600; min-height: 40px;
     }
     .input-mode-toggle button.active {
       background: var(--accent); color: white; border-color: var(--accent);
@@ -340,11 +343,18 @@
       grid-template-columns: repeat(16, 1fr);
       gap: 4px;
     }
+    @media (max-width: 480px) {
+      .heat-grid { grid-template-columns: repeat(10, 1fr); gap: 5px; }
+    }
     .heat-tile {
       aspect-ratio: 1; border-radius: 4px; cursor: pointer;
       transition: transform 0.1s; position: relative;
+      min-height: 18px;
     }
     .heat-tile:hover { transform: scale(1.3); z-index: 10; }
+    @media (max-width: 480px) {
+      .heat-tile { border-radius: 5px; }
+    }
     .heat-tile.unseen  { background: #e2e8f0; }
     .heat-tile.strong  { background: #16a34a; }
     .heat-tile.good    { background: #86efac; }
@@ -547,9 +557,9 @@
 
     <button class="btn btn-ghost" onclick="showAnalytics()" style="width:100%;justify-content:center;">📊 View Analytics</button>
 
-    <p class="subtitle" style="font-size:0.75rem;">
-      ⚠️ Requires Chrome or Edge for microphone &amp; speech.<br>
-      Serve via <code style="background:var(--border);padding:1px 6px;border-radius:4px;">python3 -m http.server 8080</code>
+    <p class="subtitle" id="device-note" style="font-size:0.75rem;">
+      ⚠️ Microphone requires Chrome or Edge on desktop/Android.<br>
+      📱 On iPhone/iPad, use the <strong>Type</strong> mode instead — voice is not supported by iOS.
     </p>
   </div>
 
@@ -1939,6 +1949,8 @@ function rereadQuestion() { const q = currentQuestion(); if (q) speak(q.q); }
 let inputMode = 'mic'; // 'mic' | 'text'
 
 function setInputMode(mode) {
+  // On iOS / no-SR devices, mic mode is not available
+  if (mode === 'mic' && (isIOS || !hasSpeechRecognition)) return;
   inputMode = mode;
   const micBtn  = document.getElementById('mode-mic-btn');
   const textBtn = document.getElementById('mode-text-btn');
@@ -1988,6 +2000,33 @@ document.addEventListener('keydown', (e) => {
     }
   }
 });
+
+// ── iOS detection ──
+// All iOS browsers (Safari, Chrome, Firefox on iOS) use WebKit and do NOT
+// support the Web Speech API for recognition. Detect and degrade gracefully.
+const isIOS = /ipad|iphone|ipod/i.test(navigator.userAgent) ||
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const hasSpeechRecognition = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+
+if (isIOS || !hasSpeechRecognition) {
+  // Auto-switch to text input mode and hide the mic controls
+  inputMode = 'text';
+  document.addEventListener('DOMContentLoaded', () => {}, false); // ensure DOM ready
+  const micArea = document.getElementById('mic-area');
+  const transcript = document.getElementById('transcript');
+  const textArea = document.getElementById('text-input-area');
+  const micModeBtn = document.getElementById('mode-mic-btn');
+  const textModeBtn = document.getElementById('mode-text-btn');
+  if (micArea)    micArea.style.display = 'none';
+  if (transcript) transcript.style.display = 'none';
+  if (textArea)   textArea.classList.add('visible');
+  if (micModeBtn) { micModeBtn.style.opacity = '0.4'; micModeBtn.style.pointerEvents = 'none'; micModeBtn.title = 'Not supported on iOS'; }
+  if (textModeBtn) textModeBtn.classList.add('active');
+
+  // Update the home screen note to be iOS-specific
+  const note = document.getElementById('device-note');
+  if (note) note.innerHTML = '📱 You\'re on iOS — microphone input isn\'t supported by Apple\'s browser engine.<br>Use the <strong>Type</strong> button to type your answers instead. Everything else works!';
+}
 
 // Init UI state
 syncSettingsUI();
