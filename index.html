@@ -384,6 +384,75 @@
       padding: 3px 6px; border-radius: 5px; white-space: nowrap; z-index: 100;
       pointer-events: none;
     }
+
+    /* ── Profile / User Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(15,23,42,0.55);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 2000; padding: 24px;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 24px; padding: 32px 28px;
+      width: 100%; max-width: 400px;
+      display: flex; flex-direction: column; align-items: center; gap: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      animation: popIn 0.25s cubic-bezier(.36,.07,.19,.97);
+    }
+    .modal-box h2 { font-size: 1.4rem; font-weight: 700; text-align: center; }
+    .modal-box p  { font-size: 0.88rem; color: var(--muted); text-align: center; line-height: 1.55; }
+    .name-input {
+      width: 100%; background: rgba(0,0,0,0.03);
+      border: 2px solid var(--border); border-radius: 12px;
+      padding: 12px 16px; font-size: 1.05rem; color: var(--text);
+      font-family: inherit; outline: none; transition: border-color 0.2s;
+      text-align: center;
+    }
+    .name-input:focus { border-color: var(--accent); }
+    .user-list { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+    .user-chip {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(0,0,0,0.03); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px 14px; cursor: pointer;
+      transition: all 0.15s; font-size: 0.9rem; font-weight: 600;
+    }
+    .user-chip:hover { border-color: var(--accent); background: #eef4ff; }
+    .user-chip .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--accent); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; font-weight: 700; flex-shrink: 0;
+    }
+    .user-chip .user-info { flex: 1; }
+    .user-chip .user-name { font-weight: 600; }
+    .user-chip .user-meta { font-size: 0.72rem; color: var(--muted); font-weight: 400; }
+    .user-chip .user-delete {
+      color: var(--muted); font-size: 0.8rem; padding: 4px 6px;
+      border-radius: 6px; transition: all 0.15s; cursor: pointer;
+    }
+    .user-chip .user-delete:hover { color: var(--error); background: rgba(239,68,68,0.1); }
+
+    /* ── User badge on home screen ── */
+    .user-banner {
+      width: 100%; display: flex; align-items: center; gap: 10px;
+      background: rgba(59,130,246,0.07); border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 14px; padding: 10px 14px;
+    }
+    .user-banner .avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--accent); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; font-weight: 700; flex-shrink: 0;
+    }
+    .user-banner .ub-name { font-weight: 700; font-size: 0.95rem; }
+    .user-banner .ub-sub  { font-size: 0.75rem; color: var(--muted); }
+    .user-banner .ub-switch {
+      margin-left: auto; font-size: 0.78rem; color: var(--accent);
+      cursor: pointer; font-weight: 600; padding: 4px 8px;
+      border-radius: 8px; transition: background 0.15s;
+    }
+    .user-banner .ub-switch:hover { background: rgba(59,130,246,0.12); }
   </style>
 </head>
 <body>
@@ -394,6 +463,28 @@
   <!-- Toast container -->
   <div id="toast-container"></div>
 
+  <!-- ═══════════════ USER SELECT MODAL ═══════════════ -->
+  <div id="user-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <div style="font-size:2.4rem;">👤</div>
+      <h2>Who's practicing?</h2>
+      <p>Your progress and analytics are saved separately for each person.</p>
+
+      <div class="user-list" id="user-list"></div>
+
+      <div style="width:100%; display:flex; flex-direction:column; gap:8px;" id="new-user-form">
+        <input class="name-input" id="name-input" type="text" maxlength="30"
+          placeholder="Enter your name…"
+          onkeydown="if(event.key==='Enter') confirmNewUser()"
+          oninput="document.getElementById('confirm-btn').disabled = !this.value.trim()">
+        <button class="btn btn-primary" id="confirm-btn" disabled onclick="confirmNewUser()"
+          style="width:100%; justify-content:center; font-size:0.95rem;">
+          Start Practicing →
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══════════════ HOME SCREEN ═══════════════ -->
   <div id="home-screen" class="screen active">
     <div class="logo">🇺🇸</div>
@@ -402,6 +493,15 @@
       Practice the 128 official 2025 USCIS civics questions.<br>
       Questions are read aloud — answer verbally using your microphone.
     </p>
+
+    <div class="user-banner" id="user-banner">
+      <div class="avatar" id="user-avatar">?</div>
+      <div>
+        <div class="ub-name" id="user-banner-name">Loading…</div>
+        <div class="ub-sub" id="user-banner-sub">Your progress is saved privately</div>
+      </div>
+      <div class="ub-switch" onclick="openUserModal()">Switch</div>
+    </div>
 
     <div class="settings-row">
       <label>
@@ -764,14 +864,147 @@ const ACHIEVEMENT_DEFS = {
 };
 
 // ══════════════════════════════════════════════════════════════
-// LOCAL STORAGE
+// USER MANAGEMENT
 // ══════════════════════════════════════════════════════════════
-function loadHistory()      { try { return JSON.parse(localStorage.getItem('civics_history') || '[]'); } catch(e) { return []; } }
-function loadQStats()       { try { return JSON.parse(localStorage.getItem('civics_qstats') || '{}'); } catch(e) { return {}; } }
-function saveQStats(s)      { localStorage.setItem('civics_qstats', JSON.stringify(s)); }
-function saveHistory(h)     { localStorage.setItem('civics_history', JSON.stringify(h)); }
-function loadAchievements() { try { return JSON.parse(localStorage.getItem('civics_achievements') || '{}'); } catch(e) { return {}; } }
-function saveAchievements(a){ localStorage.setItem('civics_achievements', JSON.stringify(a)); }
+function getAllUsers() {
+  try { return JSON.parse(localStorage.getItem('civics_users') || '[]'); } catch(e) { return []; }
+}
+function saveAllUsers(list) { localStorage.setItem('civics_users', JSON.stringify(list)); }
+
+function getCurrentUser() { return localStorage.getItem('civics_current_user') || null; }
+function setCurrentUser(name) { localStorage.setItem('civics_current_user', name); }
+
+function userKey(key) {
+  const u = getCurrentUser();
+  return u ? `civics_${u}_${key}` : `civics_${key}`;
+}
+
+function ensureUserKnown() {
+  // Migrate legacy data (before user system) to a named user if desired.
+  // For now just returns whether a user is set.
+  return !!getCurrentUser();
+}
+
+// Register a new user (or bring existing to front of list)
+function registerUser(name) {
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  let users = getAllUsers();
+  const existing = users.find(u => u.name.toLowerCase() === trimmed.toLowerCase());
+  if (existing) {
+    existing.lastSeen = new Date().toISOString().slice(0, 10);
+    users = [existing, ...users.filter(u => u !== existing)];
+  } else {
+    users.unshift({ name: trimmed, created: new Date().toISOString().slice(0, 10), lastSeen: new Date().toISOString().slice(0, 10) });
+    if (users.length > 10) users = users.slice(0, 10); // cap at 10 profiles
+  }
+  saveAllUsers(users);
+  setCurrentUser(trimmed);
+}
+
+function deleteUser(name) {
+  // Remove all their data
+  ['qstats','history','achievements'].forEach(k => {
+    localStorage.removeItem(`civics_${name}_${k}`);
+  });
+  let users = getAllUsers().filter(u => u.name !== name);
+  saveAllUsers(users);
+  if (getCurrentUser() === name) localStorage.removeItem('civics_current_user');
+}
+
+function openUserModal() {
+  renderUserModal();
+  document.getElementById('user-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('name-input').focus(), 100);
+}
+
+function closeUserModal() {
+  document.getElementById('user-modal').style.display = 'none';
+}
+
+function renderUserModal() {
+  const users = getAllUsers();
+  const list = document.getElementById('user-list');
+  list.innerHTML = '';
+
+  if (users.length) {
+    const label = document.createElement('div');
+    label.style.cssText = 'font-size:0.72rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; width:100%';
+    label.textContent = 'Continue as…';
+    list.appendChild(label);
+
+    users.forEach(u => {
+      const chip = document.createElement('div');
+      chip.className = 'user-chip';
+      chip.innerHTML = `
+        <div class="user-avatar">${u.name[0].toUpperCase()}</div>
+        <div class="user-info">
+          <div class="user-name">${u.name}</div>
+          <div class="user-meta">Last seen ${u.lastSeen || 'never'}</div>
+        </div>
+        <div class="user-delete" title="Delete this profile" onclick="event.stopPropagation(); confirmDeleteUser('${u.name.replace(/'/g,"\\'")}')">✕</div>
+      `;
+      chip.addEventListener('click', () => {
+        registerUser(u.name);
+        closeUserModal();
+        updateUserBanner();
+      });
+      list.appendChild(chip);
+    });
+
+    const divider = document.createElement('div');
+    divider.style.cssText = 'width:100%; border-top:1px solid var(--border); margin:4px 0;';
+    list.appendChild(divider);
+
+    const orLabel = document.createElement('div');
+    orLabel.style.cssText = 'font-size:0.72rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; width:100%';
+    orLabel.textContent = 'Or add a new person';
+    list.appendChild(orLabel);
+  }
+
+  // Clear the input
+  document.getElementById('name-input').value = '';
+  document.getElementById('confirm-btn').disabled = true;
+}
+
+function confirmNewUser() {
+  const name = document.getElementById('name-input').value.trim();
+  if (!name) return;
+  registerUser(name);
+  closeUserModal();
+  updateUserBanner();
+}
+
+function confirmDeleteUser(name) {
+  if (!confirm(`Delete profile for "${name}"? All their progress will be lost.`)) return;
+  deleteUser(name);
+  renderUserModal();
+  if (!getCurrentUser()) updateUserBanner();
+}
+
+function updateUserBanner() {
+  const name = getCurrentUser();
+  if (!name) return;
+  const initial = name[0].toUpperCase();
+  document.getElementById('user-avatar').textContent = initial;
+  document.getElementById('user-banner-name').textContent = name;
+  // Count sessions
+  const h = loadHistory();
+  const qs = loadQStats();
+  const practiced = Object.keys(qs).length;
+  document.getElementById('user-banner-sub').textContent =
+    `${practiced} of 128 questions practiced · ${h.length} session${h.length !== 1 ? 's' : ''}`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// LOCAL STORAGE  (namespaced by current user)
+// ══════════════════════════════════════════════════════════════
+function loadHistory()      { try { return JSON.parse(localStorage.getItem(userKey('history')) || '[]'); } catch(e) { return []; } }
+function loadQStats()       { try { return JSON.parse(localStorage.getItem(userKey('qstats')) || '{}'); } catch(e) { return {}; } }
+function saveQStats(s)      { localStorage.setItem(userKey('qstats'), JSON.stringify(s)); }
+function saveHistory(h)     { localStorage.setItem(userKey('history'), JSON.stringify(h)); }
+function loadAchievements() { try { return JSON.parse(localStorage.getItem(userKey('achievements')) || '{}'); } catch(e) { return {}; } }
+function saveAchievements(a){ localStorage.setItem(userKey('achievements'), JSON.stringify(a)); }
 function loadSettings()     { try { return JSON.parse(localStorage.getItem('civics_settings') || '{}'); } catch(e) { return {}; } }
 function saveSettings()     { localStorage.setItem('civics_settings', JSON.stringify({ sound: state.soundEnabled, timer: state.timerEnabled })); }
 
@@ -1341,8 +1574,10 @@ function showAnalytics() {
 }
 
 function resetAnalytics() {
-  if (!confirm('Reset all question stats? This cannot be undone.')) return;
-  localStorage.removeItem('civics_qstats');
+  const name = getCurrentUser();
+  const who = name ? ` for ${name}` : '';
+  if (!confirm(`Reset all question stats${who}? This cannot be undone.`)) return;
+  localStorage.removeItem(userKey('qstats'));
   showAnalytics(); // refresh
 }
 
@@ -1353,7 +1588,12 @@ function showHome() {
   syncSettingsUI();
   renderHistory();
   populateVoiceSelect();
+  updateUserBanner();
   showScreen('home-screen');
+  // If no user is set yet, prompt them to identify themselves
+  if (!getCurrentUser()) {
+    setTimeout(openUserModal, 250);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1750,10 +1990,15 @@ document.addEventListener('keydown', (e) => {
 // Init UI state
 syncSettingsUI();
 renderHistory();
+updateUserBanner();
 if (window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = () => populateVoiceSelect();
   // Some browsers load voices synchronously
   populateVoiceSelect();
+}
+// Show user selection on first visit (or if no user is stored)
+if (!getCurrentUser()) {
+  setTimeout(openUserModal, 400);
 }
 </script>
 </body>
