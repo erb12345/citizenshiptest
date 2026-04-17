@@ -467,6 +467,7 @@
       <hr class="divider">
       <div class="controls">
         <button class="btn btn-primary" onclick="nextQuestion()" id="next-btn">Next Question →</button>
+        <button class="btn btn-ghost" onclick="retryQuestion()" id="try-again-btn" style="display:none;">🎤 Try Again</button>
       </div>
     </div>
   </div>
@@ -702,15 +703,38 @@ let state = {
 // ══════════════════════════════════════════════════════════════
 // ANSWER MATCHING
 // ══════════════════════════════════════════════════════════════
+// Number word → digit mapping for normalization
+const NUM_MAP = {
+  'zero':'0','one':'1','two':'2','three':'3','four':'4','five':'5','six':'6',
+  'seven':'7','eight':'8','nine':'9','ten':'10','eleven':'11','twelve':'12',
+  'thirteen':'13','fourteen':'14','fifteen':'15','sixteen':'16','seventeen':'17',
+  'eighteen':'18','nineteen':'19','twenty':'20','thirty':'30','forty':'40',
+  'fifty':'50','sixty':'60','seventy':'70','eighty':'80','ninety':'90',
+};
+
 function normalizeText(t) {
-  return t.toLowerCase()
+  let s = t.toLowerCase()
     .replace(/['\u2018\u2019\u201c\u201d]/g, '')
     .replace(/[-–—]/g, ' ')
-    .replace(/\btwenty[\s-]?seven\b/g, '27')
-    .replace(/\bone[\s-]?hundred\b/g, '100')
+    // Ordinals spelled out → shorthand
+    .replace(/\btwenty[\s-]?second\b/g, '22nd')
+    .replace(/\bfourteenth\b/g, '14th')
+    .replace(/\bfifteenth\b/g, '15th')
+    .replace(/\bnineteenth\b/g, '19th')
+    .replace(/\bsixteenth\b/g, '16th')
+    .replace(/\btwenty[\s-]?seventh\b/g, '27th')
+    // Multi-word numbers first (order matters)
     .replace(/\bfour[\s-]?hundred[\s-]?thirty[\s-]?five\b/g, '435')
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ').trim();
+    .replace(/\bone[\s-]?hundred\b/g, '100')
+    .replace(/\btwenty[\s-]?seven\b/g, '27')
+    .replace(/\btwenty[\s-]?two\b/g, '22')
+    .replace(/\btwenty[\s-]?one\b/g, '21')
+    // Single number words
+    .replace(/[^a-z0-9\s]/g, ' ');
+  // Replace remaining number words with digits
+  s = s.replace(/\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)\b/g,
+    m => NUM_MAP[m] || m);
+  return s.replace(/\s+/g, ' ').trim();
 }
 
 function answerMatches(spokenNorm, accepted) {
@@ -725,14 +749,22 @@ function answerMatches(spokenNorm, accepted) {
 
 function checkAnswer(q, spoken) {
   if (q.selfEval) return null;
-  const norm = normalizeText(spoken);
-  if (q.min <= 1) return q.a.some(a => answerMatches(norm, a));
-  let matched = 0;
-  const used = new Set();
-  for (const a of q.a) {
-    if (!used.has(a) && answerMatches(norm, a)) { used.add(a); matched++; }
+  // Check the primary transcript AND all STT alternatives
+  const candidates = [spoken, ...(state.allAlternatives || [])];
+  for (const candidate of candidates) {
+    const norm = normalizeText(candidate);
+    if (q.min <= 1) {
+      if (q.a.some(a => answerMatches(norm, a))) return true;
+    } else {
+      let matched = 0;
+      const used = new Set();
+      for (const a of q.a) {
+        if (!used.has(a) && answerMatches(norm, a)) { used.add(a); matched++; }
+      }
+      if (matched >= q.min) return true;
+    }
   }
-  return matched >= q.min;
+  return false;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -982,24 +1014,46 @@ function initRecognition() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return null;
   const r = new SR();
-  r.lang = 'en-US'; r.continuous = false; r.interimResults = true;
+  r.lang = 'en-US';
+  r.continuous = true;       // keep listening until user taps stop
+  r.interimResults = true;
+  r.maxAlternatives = 5;     // collect up to 5 interpretations per utterance
+
+  let finalTranscript = '';
+  state.allAlternatives = [];
+
   r.onresult = e => {
-    let interim = '', final = '';
+    let interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) final += e.results[i][0].transcript;
-      else interim += e.results[i][0].transcript;
+      if (e.results[i].isFinal) {
+        finalTranscript += e.results[i][0].transcript + ' ';
+        // Collect all alternative interpretations
+        for (let j = 0; j < e.results[i].length; j++) {
+          const alt = e.results[i][j].transcript.trim();
+          if (alt) state.allAlternatives.push(alt);
+        }
+      } else {
+        interim += e.results[i][0].transcript;
+      }
     }
-    const t = (final || interim).trim();
-    state.currentTranscript = t;
-    updateTranscript(t);
+    const display = (finalTranscript + interim).trim();
+    state.currentTranscript = finalTranscript.trim() || interim.trim();
+    updateTranscript(display);
   };
+
   r.onend = () => {
     if (state.micState === 'listening') {
+      // Restart automatically to keep listening (handles 'no-speech' timeouts too)
+      try { r.start(); return; } catch(_) {}
+      // If restart fails, fall through to idle
       setMicState('idle');
       if (state.currentTranscript) document.getElementById('submit-btn').disabled = false;
     }
   };
-  r.onerror = () => setMicState('idle');
+  r.onerror = (e) => {
+    if (e.error === 'no-speech') return; // onend will restart
+    setMicState('idle');
+  };
   return r;
 }
 
@@ -1118,6 +1172,9 @@ function startTest(mode) {
   state.categoryStats = {};
   state.newAchievements = [];
   state.lastAnswerMs = null;
+  state.allAlternatives = [];
+  state.lastResultQ = null;
+  state.lastResultCorrect = null;
 
   if (mode === 'standard') state.queue = shuffle(QUESTIONS).slice(0, 20);
   else if (mode === 'senior') state.queue = shuffle(QUESTIONS.filter(q => q.asterisk));
@@ -1213,6 +1270,10 @@ function showResult(correct, transcript, q) {
   state.synth.cancel(); clearTimer();
   if (state.recognition) try { state.recognition.stop(); } catch(e) {}
 
+  // Save for potential retry
+  state.lastResultQ = q;
+  state.lastResultCorrect = correct;
+
   // Track category
   if (!state.categoryStats[q.cat]) state.categoryStats[q.cat] = { correct:0, total:0 };
   state.categoryStats[q.cat].total++;
@@ -1256,6 +1317,10 @@ function showResult(correct, transcript, q) {
   else if (correct === false) { icon.textContent = '❌'; label.textContent = 'Incorrect';        label.className = 'result-label incorrect'; }
   else                        { icon.textContent = '🤔'; label.textContent = 'Self-Evaluated';   label.className = 'result-label self-eval'; }
 
+  // Show Try Again only on wrong answers (not self-eval, not time-expired)
+  const tryAgainBtn = document.getElementById('try-again-btn');
+  tryAgainBtn.style.display = (correct === false && transcript !== '(time expired)') ? '' : 'none';
+
   document.getElementById('you-said-text').textContent = transcript || '(nothing detected)';
 
   const acceptedBox = document.getElementById('accepted-box');
@@ -1293,6 +1358,20 @@ function showResult(correct, transcript, q) {
 function nextQuestion() {
   if (state.currentIdx >= state.queue.length) showComplete();
   else { showScreen('question-screen'); loadQuestion(); }
+}
+
+function retryQuestion() {
+  const q = state.lastResultQ;
+  if (!q) return;
+  // Undo the score and category stat from the wrong answer
+  state.incorrect--;
+  state.categoryStats[q.cat].total--;
+  // Go back to the question (currentIdx was already incremented in showResult)
+  state.currentIdx--;
+  state.allAlternatives = [];
+  state.currentTranscript = '';
+  showScreen('question-screen');
+  loadQuestion();
 }
 
 // ══════════════════════════════════════════════════════════════
