@@ -323,6 +323,67 @@
 
     .btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; width: 100%; }
     hr.divider { width: 100%; border: none; border-top: 1px solid var(--border); }
+
+    /* ── Analytics ── */
+    .analytics-overview {
+      width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    }
+    .an-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px 10px; text-align: center;
+    }
+    .an-val { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+    .an-lbl { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    .heat-grid {
+      width: 100%; display: grid;
+      grid-template-columns: repeat(16, 1fr);
+      gap: 4px;
+    }
+    .heat-tile {
+      aspect-ratio: 1; border-radius: 4px; cursor: pointer;
+      transition: transform 0.1s; position: relative;
+    }
+    .heat-tile:hover { transform: scale(1.3); z-index: 10; }
+    .heat-tile.unseen  { background: #e2e8f0; }
+    .heat-tile.strong  { background: #16a34a; }
+    .heat-tile.good    { background: #86efac; }
+    .heat-tile.shaky   { background: #fca5a5; }
+    .heat-tile.weak    { background: #dc2626; }
+
+    .heat-legend {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      font-size: 0.75rem; color: var(--muted); align-items: center;
+    }
+    .legend-item { display: flex; align-items: center; gap: 4px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+    .an-section { width: 100%; }
+    .an-section-title {
+      font-size: 0.75rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px;
+    }
+    .weak-question {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem;
+    }
+    .weak-question:last-child { border-bottom: none; }
+    .wq-num {
+      background: var(--error); color: white; font-size: 0.7rem; font-weight: 700;
+      padding: 2px 6px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; margin-top: 1px;
+    }
+    .wq-num.good { background: var(--success); }
+    .wq-text { flex: 1; color: var(--text); line-height: 1.4; }
+    .wq-rate { font-size: 0.75rem; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+
+    /* Tooltip on hover */
+    .heat-tile[data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+      background: #1e293b; color: white; font-size: 0.65rem;
+      padding: 3px 6px; border-radius: 5px; white-space: nowrap; z-index: 100;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -383,6 +444,8 @@
       <div class="panel-title">Recent Tests</div>
       <div id="history-list"></div>
     </div>
+
+    <button class="btn btn-ghost" onclick="showAnalytics()" style="width:100%;justify-content:center;">📊 View Analytics</button>
 
     <p class="subtitle" style="font-size:0.75rem;">
       ⚠️ Requires Chrome or Edge for microphone &amp; speech.<br>
@@ -500,6 +563,54 @@
 
     <div class="btn-row">
       <button class="btn btn-primary" onclick="showHome()">New Test</button>
+      <button class="btn btn-ghost" onclick="showAnalytics()">📊 Analytics</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ ANALYTICS SCREEN ═══════════════ -->
+  <div id="analytics-screen" class="screen">
+    <div style="width:100%; display:flex; align-items:center; gap:12px;">
+      <button class="btn btn-ghost" onclick="showHome()" style="padding:8px 14px;">← Back</button>
+      <h1 style="font-size:1.3rem;">📊 Analytics</h1>
+    </div>
+
+    <div class="analytics-overview" id="an-overview"></div>
+
+    <div class="an-section">
+      <div class="an-section-title">Question Heat Map — all 128 questions</div>
+      <div class="heat-grid" id="heat-grid"></div>
+      <div class="heat-legend" style="margin-top:8px;">
+        <div class="legend-item"><div class="legend-dot" style="background:#e2e8f0"></div> Not practiced</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#86efac"></div> Mostly correct</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#16a34a"></div> Strong</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fca5a5"></div> Struggling</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#dc2626"></div> Needs work</div>
+      </div>
+    </div>
+
+    <div class="an-section" id="an-weak-section">
+      <div class="an-section-title">⚠️ Needs Most Work</div>
+      <div id="an-weak-list"></div>
+      <button class="btn btn-primary" onclick="startTest('weak')" id="an-practice-weak-btn" style="margin-top:12px; width:100%; justify-content:center;">
+        Practice These Questions
+      </button>
+    </div>
+
+    <div class="an-section" id="an-unseen-section">
+      <div class="an-section-title">👀 Never Practiced</div>
+      <p id="an-unseen-text" style="font-size:0.85rem; color:var(--muted); margin-bottom:10px;"></p>
+      <button class="btn btn-ghost" onclick="startTest('unseen')" id="an-practice-unseen-btn" style="width:100%; justify-content:center;">
+        Practice Unseen Questions
+      </button>
+    </div>
+
+    <div class="an-section">
+      <div class="an-section-title">💪 Your Strongest Questions</div>
+      <div id="an-strong-list"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="resetAnalytics()" style="color:var(--error); border-color:var(--error);">Reset All Data</button>
     </div>
   </div>
 
@@ -656,6 +767,8 @@ const ACHIEVEMENT_DEFS = {
 // LOCAL STORAGE
 // ══════════════════════════════════════════════════════════════
 function loadHistory()      { try { return JSON.parse(localStorage.getItem('civics_history') || '[]'); } catch(e) { return []; } }
+function loadQStats()       { try { return JSON.parse(localStorage.getItem('civics_qstats') || '{}'); } catch(e) { return {}; } }
+function saveQStats(s)      { localStorage.setItem('civics_qstats', JSON.stringify(s)); }
 function saveHistory(h)     { localStorage.setItem('civics_history', JSON.stringify(h)); }
 function loadAchievements() { try { return JSON.parse(localStorage.getItem('civics_achievements') || '{}'); } catch(e) { return {}; } }
 function saveAchievements(a){ localStorage.setItem('civics_achievements', JSON.stringify(a)); }
@@ -1134,6 +1247,105 @@ function showScreen(id) {
   document.getElementById(id).classList.add('active');
 }
 
+// ══════════════════════════════════════════════════════════════
+// ANALYTICS
+// ══════════════════════════════════════════════════════════════
+function getTileClass(stat) {
+  if (!stat || (stat.correct + stat.incorrect) === 0) return 'unseen';
+  const rate = stat.correct / (stat.correct + stat.incorrect);
+  if (rate >= 0.8) return 'strong';
+  if (rate >= 0.5) return 'good';
+  if (rate >= 0.25) return 'shaky';
+  return 'weak';
+}
+
+function showAnalytics() {
+  state.synth.cancel();
+  const qstats = loadQStats();
+
+  // Overview numbers
+  const practiced  = QUESTIONS.filter(q => qstats[q.id] && (qstats[q.id].correct + qstats[q.id].incorrect) > 0);
+  const totalCorrect   = practiced.reduce((s, q) => s + (qstats[q.id]?.correct  || 0), 0);
+  const totalAttempts  = practiced.reduce((s, q) => s + (qstats[q.id]?.correct  || 0) + (qstats[q.id]?.incorrect || 0), 0);
+  const accuracy = totalAttempts ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+
+  document.getElementById('an-overview').innerHTML = `
+    <div class="an-box"><div class="an-val">${practiced.length}</div><div class="an-lbl">of 128 Practiced</div></div>
+    <div class="an-box"><div class="an-val">${accuracy}%</div><div class="an-lbl">Overall Accuracy</div></div>
+    <div class="an-box"><div class="an-val">${128 - practiced.length}</div><div class="an-lbl">Never Seen</div></div>
+  `;
+
+  // Heat grid
+  const grid = document.getElementById('heat-grid');
+  grid.innerHTML = '';
+  QUESTIONS.forEach(q => {
+    const stat = qstats[q.id];
+    const cls  = getTileClass(stat);
+    const attempts = stat ? stat.correct + stat.incorrect : 0;
+    const rate = attempts ? Math.round((stat.correct / attempts) * 100) : null;
+    const tip  = `Q${q.id}: ${rate !== null ? rate + '% (' + attempts + ' attempts)' : 'not practiced'}`;
+    const tile = document.createElement('div');
+    tile.className = `heat-tile ${cls}`;
+    tile.setAttribute('data-tip', tip);
+    tile.title = `Q${q.id} — ${q.q.slice(0, 60)}${q.q.length > 60 ? '…' : ''}`;
+    grid.appendChild(tile);
+  });
+
+  // Needs work — questions with at least 1 attempt, sorted by error rate desc
+  const withAttempts = QUESTIONS
+    .filter(q => qstats[q.id] && (qstats[q.id].correct + qstats[q.id].incorrect) > 0)
+    .map(q => {
+      const s = qstats[q.id];
+      const attempts = s.correct + s.incorrect;
+      return { q, rate: s.incorrect / attempts, attempts, correct: s.correct, incorrect: s.incorrect };
+    })
+    .sort((a, b) => b.rate - a.rate);
+
+  const weakList = document.getElementById('an-weak-list');
+  const weak = withAttempts.filter(x => x.rate > 0).slice(0, 10);
+  if (weak.length) {
+    document.getElementById('an-weak-section').style.display = '';
+    weakList.innerHTML = weak.map(({ q, rate, correct, incorrect }) => `
+      <div class="weak-question">
+        <span class="wq-num">Q${q.id}</span>
+        <span class="wq-text">${q.q}</span>
+        <span class="wq-rate">${correct}✓ ${incorrect}✗</span>
+      </div>`).join('');
+    document.getElementById('an-practice-weak-btn').style.display = weak.length ? '' : 'none';
+  } else {
+    document.getElementById('an-weak-section').style.display = 'none';
+  }
+
+  // Unseen
+  const unseen = QUESTIONS.filter(q => !qstats[q.id] || (qstats[q.id].correct + qstats[q.id].incorrect) === 0);
+  const unseenSection = document.getElementById('an-unseen-section');
+  if (unseen.length) {
+    unseenSection.style.display = '';
+    document.getElementById('an-unseen-text').textContent =
+      `${unseen.length} question${unseen.length !== 1 ? 's' : ''} you've never answered. Practice them to get full coverage.`;
+  } else {
+    unseenSection.style.display = 'none';
+  }
+
+  // Strongest — 100% accuracy, at least 2 attempts
+  const strongList = document.getElementById('an-strong-list');
+  const strong = withAttempts.filter(x => x.rate === 0 && x.attempts >= 2).slice(0, 5);
+  strongList.innerHTML = strong.length ? strong.map(({ q, attempts }) => `
+    <div class="weak-question">
+      <span class="wq-num good">Q${q.id}</span>
+      <span class="wq-text">${q.q}</span>
+      <span class="wq-rate">${attempts} attempts</span>
+    </div>`).join('') : '<p style="font-size:0.85rem;color:var(--muted)">Answer more questions to see your strongest.</p>';
+
+  showScreen('analytics-screen');
+}
+
+function resetAnalytics() {
+  if (!confirm('Reset all question stats? This cannot be undone.')) return;
+  localStorage.removeItem('civics_qstats');
+  showAnalytics(); // refresh
+}
+
 function showHome() {
   state.synth.cancel();
   clearTimer();
@@ -1173,9 +1385,27 @@ function startTest(mode) {
   state.lastResultQ = null;
   state.lastResultCorrect = null;
 
-  if (mode === 'standard') state.queue = shuffle(QUESTIONS).slice(0, 20);
-  else if (mode === 'senior') state.queue = shuffle(QUESTIONS.filter(q => q.asterisk));
-  else state.queue = shuffle(QUESTIONS);
+  if (mode === 'standard') {
+    state.queue = shuffle(QUESTIONS).slice(0, 20);
+  } else if (mode === 'weak') {
+    const qstats = loadQStats();
+    const weak = QUESTIONS
+      .filter(q => qstats[q.id] && qstats[q.id].incorrect > 0)
+      .sort((a, b) => {
+        const ra = qstats[a.id].incorrect / (qstats[a.id].correct + qstats[a.id].incorrect);
+        const rb = qstats[b.id].incorrect / (qstats[b.id].correct + qstats[b.id].incorrect);
+        return rb - ra;
+      });
+    state.queue = shuffle(weak.slice(0, 20));
+    if (!state.queue.length) { alert('No wrong answers recorded yet. Complete a test first!'); return; }
+  } else if (mode === 'unseen') {
+    const qstats = loadQStats();
+    const unseen = QUESTIONS.filter(q => !qstats[q.id] || (qstats[q.id].correct + qstats[q.id].incorrect) === 0);
+    state.queue = shuffle(unseen);
+    if (!state.queue.length) { alert("You've practiced all 128 questions! 🎉"); return; }
+  } else {
+    state.queue = shuffle(QUESTIONS);
+  }
 
   showScreen('question-screen');
   loadQuestion();
@@ -1270,6 +1500,15 @@ function showResult(correct, transcript, q) {
   // Save for potential retry
   state.lastResultQ = q;
   state.lastResultCorrect = correct;
+
+  // Track per-question analytics (only for definitive correct/incorrect, not self-eval)
+  if (correct === true || correct === false) {
+    const qstats = loadQStats();
+    if (!qstats[q.id]) qstats[q.id] = { correct: 0, incorrect: 0, lastSeen: null };
+    if (correct) qstats[q.id].correct++; else qstats[q.id].incorrect++;
+    qstats[q.id].lastSeen = new Date().toISOString().slice(0, 10);
+    saveQStats(qstats);
+  }
 
   // Track category
   if (!state.categoryStats[q.cat]) state.categoryStats[q.cat] = { correct:0, total:0 };
