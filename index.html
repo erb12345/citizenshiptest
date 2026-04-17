@@ -647,7 +647,7 @@
 
     <div class="stats-grid">
       <div class="stat-box green"><div class="stat-val" id="stat-correct">0</div><div class="stat-lbl">Correct</div></div>
-      <div class="stat-box red"><div class="stat-val" id="stat-incorrect">0</div><div class="stat-lbl">Incorrect</div></div>
+      <div class="stat-box red"><div class="stat-val" id="stat-incorrect">0</div><div class="stat-lbl">Keep Practicing</div></div>
       <div class="stat-box"><div class="stat-val" id="stat-skipped">0</div><div class="stat-lbl">Skipped</div></div>
     </div>
 
@@ -1789,9 +1789,11 @@ function showResult(correct, transcript, q) {
   const label = document.getElementById('result-label');
   const tags  = document.getElementById('answer-tags');
 
-  if (correct === true)       { icon.textContent = '✅'; label.textContent = 'Correct!';        label.className = 'result-label correct'; }
-  else if (correct === false) { icon.textContent = '❌'; label.textContent = 'Incorrect';        label.className = 'result-label incorrect'; }
-  else                        { icon.textContent = '🤔'; label.textContent = 'Self-Evaluated';   label.className = 'result-label self-eval'; }
+  const encouragements = ['Keep going!', 'Almost there!', 'Good try!', 'You\'ll get it!', 'Keep practicing!', 'Nice effort!', 'Don\'t give up!', 'So close!'];
+  const encMsg = encouragements[Math.floor(Math.random() * encouragements.length)];
+  if (correct === true)       { icon.textContent = '✅'; label.textContent = 'Correct!';  label.className = 'result-label correct'; }
+  else if (correct === false) { icon.textContent = '💪'; label.textContent = encMsg;      label.className = 'result-label incorrect'; }
+  else                        { icon.textContent = '🤔'; label.textContent = 'Self-Evaluated'; label.className = 'result-label self-eval'; }
 
   // Show Try Again only on wrong answers (not self-eval, not time-expired)
   const tryAgainBtn = document.getElementById('try-again-btn');
@@ -1825,7 +1827,7 @@ function showResult(correct, transcript, q) {
 
   // Speak feedback
   if (correct === true) setTimeout(() => speak('Correct!'), 100);
-  else if (correct === false) setTimeout(() => speak('Incorrect.'), 100);
+  else if (correct === false) setTimeout(() => speak(encMsg), 100);
 
   showScreen('result-screen');
   state.currentIdx++;
