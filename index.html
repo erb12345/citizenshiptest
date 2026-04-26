@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Civics Daily</title>
+  <script src="https://code.responsivevoice.org/responsivevoice.js?key=FREE"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1520,19 +1521,43 @@ function timerExpired() {
 // SPEECH SYNTHESIS (TTS)
 // ══════════════════════════════════════════════════════════════
 function speak(text, onDone) {
+  // Cancel any in-progress speech
+  if (window.responsiveVoice) responsiveVoice.cancel();
   state.synth.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = 'en-US'; utt.rate = 0.92; utt.pitch = 1;
-  const voice = getSelectedVoice();
-  if (voice) utt.voice = voice;
-  state.isSpeaking = true;
-  document.getElementById('tts-row').classList.add('visible');
-  utt.onend = utt.onerror = () => {
-    state.isSpeaking = false;
-    document.getElementById('tts-row').classList.remove('visible');
-    if (onDone) onDone();
-  };
-  state.synth.speak(utt);
+
+  if (!loadSettings().sound) return;
+
+  const rvVoice = loadSettings().voiceName || 'US English Female';
+
+  if (window.responsiveVoice) {
+    state.isSpeaking = true;
+    document.getElementById('tts-row').classList.add('visible');
+    responsiveVoice.speak(text, rvVoice, {
+      rate: 0.92,
+      onend: () => {
+        state.isSpeaking = false;
+        document.getElementById('tts-row').classList.remove('visible');
+        if (onDone) onDone();
+      },
+      onerror: () => {
+        state.isSpeaking = false;
+        document.getElementById('tts-row').classList.remove('visible');
+        if (onDone) onDone();
+      }
+    });
+  } else {
+    // Fallback to native Web Speech API
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = 'en-US'; utt.rate = 0.92; utt.pitch = 1;
+    state.isSpeaking = true;
+    document.getElementById('tts-row').classList.add('visible');
+    utt.onend = utt.onerror = () => {
+      state.isSpeaking = false;
+      document.getElementById('tts-row').classList.remove('visible');
+      if (onDone) onDone();
+    };
+    state.synth.speak(utt);
+  }
 }
 
 // ── Voice Selection ──
@@ -1567,23 +1592,22 @@ function pickBestDefaultVoice(voices) {
 function populateVoiceSelect() {
   const select = document.getElementById('voice-select');
   if (!select) return;
-  const voices = getEnglishVoices();
-  if (!voices.length) return;
-  const current = getSelectedVoice();
+  // Use ResponsiveVoice voices — consistent across all devices
+  const rvVoices = [
+    'US English Female',
+    'US English Male',
+    'UK English Female',
+    'UK English Male',
+    'Australian Female',
+    'Australian Male',
+  ];
+  const saved = loadSettings().voiceName || 'US English Female';
   select.innerHTML = '';
-  // Sort: en-US first, then alphabetical
-  const sorted = [...voices].sort((a, b) => {
-    if (a.lang === 'en-US' && b.lang !== 'en-US') return -1;
-    if (b.lang === 'en-US' && a.lang !== 'en-US') return 1;
-    return a.name.localeCompare(b.name);
-  });
-  sorted.forEach(v => {
+  rvVoices.forEach(name => {
     const opt = document.createElement('option');
-    opt.value = v.name;
-    const label = v.name.replace('com.apple.speech.synthesis.voice.','').replace('com.apple.','');
-    const tag = v.lang === 'en-US' ? '' : ` (${v.lang})`;
-    opt.textContent = label + tag;
-    if (current && v.name === current.name) opt.selected = true;
+    opt.value = name;
+    opt.textContent = name;
+    if (name === saved) opt.selected = true;
     select.appendChild(opt);
   });
 }
@@ -1650,7 +1674,7 @@ function initRecognition() {
 }
 
 function toggleMic() {
-  if (state.isSpeaking) { state.synth.cancel(); state.isSpeaking = false; document.getElementById('tts-row').classList.remove('visible'); }
+  if (state.isSpeaking) { if (window.responsiveVoice) responsiveVoice.cancel(); state.synth.cancel(); state.isSpeaking = false; document.getElementById('tts-row').classList.remove('visible'); }
   if (state.micState === 'listening') { state.recognition.stop(); setMicState('idle'); return; }
   if (state.micState === 'processing') return;
   state.currentTranscript = '';
@@ -1983,6 +2007,7 @@ function skipQuestion() {
 }
 
 function showResult(correct, transcript, q) {
+  if (window.responsiveVoice) responsiveVoice.cancel();
   state.synth.cancel(); clearTimer();
   if (state.recognition) try { state.recognition.stop(); } catch(e) {}
 
@@ -2107,6 +2132,7 @@ function retryQuestion() {
 // COMPLETE SCREEN
 // ══════════════════════════════════════════════════════════════
 function showComplete() {
+  if (window.responsiveVoice) responsiveVoice.cancel();
   state.synth.cancel();
   const total    = state.correct + state.incorrect + state.skipped;
   const minPass  = state.mode === 'standard' ? 12 : state.mode === 'senior' ? 6 : null;
