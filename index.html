@@ -360,16 +360,16 @@
     .result-note { display: none !important; } /* removed — info now in accepted answers */
     .result-header { display: none; } /* stamp moved into result-question block */
 
-    /* Stamp — floated into question block */
+    /* Stamp — sits beside You Said text */
     .result-label {
-      float: right; margin: 2px 0 8px 12px;
       padding: 6px 14px; font-family: var(--serif); font-size: 14px;
       font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
-      transform: rotate(-4deg); display: inline-block;
+      transform: rotate(-4deg); display: inline-block; flex-shrink: 0; align-self: center;
     }
     .result-label.correct  { border: 2px solid var(--good); color: var(--good); background: var(--good-soft); }
     .result-label.incorrect{ border: 2px solid var(--warn); color: var(--warn); background: var(--warn-soft); }
     .result-label.self-eval{ border: 2px solid var(--gold); color: var(--gold); background: var(--gold-soft); }
+    .you-said-row { display: flex; align-items: center; gap: 16px; }
 
     /* Section shared styles */
     .result-section {
@@ -386,7 +386,6 @@
     .result-question {
       padding: 20px 22px 18px;
       border-bottom: 1px solid var(--rule-f);
-      overflow: hidden; /* clearfix for floated stamp */
     }
     .result-question-label {
       font-family: var(--mono); font-size: 9px; letter-spacing: 1.2px;
@@ -818,9 +817,8 @@
       <div class="masthead-sub" id="result-masthead-sub"></div>
     </div>
 
-    <!-- Question section (stamp floats right inside here) -->
+    <!-- Question section -->
     <div class="result-question" id="result-question-wrap">
-      <div class="result-label" id="result-label"></div>
       <span class="result-question-label">Question</span>
       <div class="result-question-text" id="result-question"></div>
     </div>
@@ -831,9 +829,13 @@
     <div style="display:none;" id="result-note"></div>
     <div style="display:none;" class="result-header"><div></div></div>
 
+    <!-- You Said + stamp together -->
     <div class="what-you-said" id="you-said-box">
       <span class="label">You Said</span>
-      <div class="said-text" id="you-said-text"></div>
+      <div class="you-said-row">
+        <div class="said-text" id="you-said-text"></div>
+        <div class="result-label" id="result-label"></div>
+      </div>
     </div>
 
     <div class="accepted-answers" id="accepted-box">
