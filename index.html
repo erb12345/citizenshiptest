@@ -367,6 +367,14 @@
     .result-label.incorrect{ border: 1.5px solid var(--warn); color: var(--warn); background: var(--warn-soft); }
     .result-label.self-eval{ border: 1.5px solid var(--gold); color: var(--gold); background: var(--gold-soft); }
 
+    .result-question {
+      padding: 20px 22px 0;
+      font-family: var(--serif); font-size: 15px; line-height: 1.45;
+      color: var(--muted); font-style: italic;
+      border-bottom: 1px solid var(--rule-f);
+      padding-bottom: 14px; margin-bottom: 0;
+    }
+
     .result-verdict {
       font-family: var(--serif); font-size: 26px; line-height: 1.15;
       letter-spacing: -0.5px; color: var(--text); font-weight: 500; max-width: 240px;
@@ -796,6 +804,8 @@
       </div>
       <div class="masthead-sub" id="result-masthead-sub"></div>
     </div>
+
+    <div class="result-question" id="result-question"></div>
 
     <div class="result-header">
       <div class="result-label" id="result-label"></div>
@@ -2311,6 +2321,9 @@ loadQuestion = function() {
 const _origShowResult = showResult;
 showResult = function(correct, transcript, q) {
   _origShowResult(correct, transcript, q);
+  // Show the question text
+  const qEl = document.getElementById('result-question');
+  if (qEl && q) qEl.textContent = q.q;
   // Update masthead
   const mr = document.getElementById('result-masthead-right');
   const ms = document.getElementById('result-masthead-sub');
