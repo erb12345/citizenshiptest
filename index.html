@@ -341,6 +341,11 @@
 
     /* Controls */
     .controls { display: flex; gap: 8px; padding: 14px 22px 0; border-top: 1px solid var(--rule); margin-top: 20px; }
+    .ai-disclaimer {
+      padding: 10px 22px 20px;
+      font-family: var(--mono); font-size: 9px; letter-spacing: 0.3px;
+      color: var(--faint); line-height: 1.6; text-align: center;
+    }
     .controls .btn { flex: 1; }
     .controls .btn-skip { flex: 0 0 auto; }
 
@@ -805,6 +810,7 @@
         <button class="btn btn-error" onclick="selfEval(false)">✗ I didn't</button>
       </div>
     </div>
+    <div class="ai-disclaimer">Answer matching is automated and may occasionally err. Always verify with official USCIS materials.</div>
   </div>
 
   <!-- ═══════════════ RESULT SCREEN ═══════════════ -->
@@ -848,6 +854,7 @@
       <button class="btn btn-primary" onclick="nextQuestion()" id="next-btn">Next →</button>
       <button class="btn btn-ghost" onclick="retryQuestion()" id="try-again-btn" style="display:none;">Try Again</button>
     </div>
+    <div class="ai-disclaimer">Answer matching is automated and may occasionally err. Always verify with official USCIS materials.</div>
   </div>
 
   <!-- ═══════════════ COMPLETE SCREEN ═══════════════ -->
