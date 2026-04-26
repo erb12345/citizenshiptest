@@ -435,6 +435,28 @@
     .cat-bar-fill { height: 100%; background: var(--gold); transition: width 0.6s ease; }
     .cat-score { font-family: var(--mono); font-size: 10px; color: var(--muted); min-width: 28px; text-align: right; }
 
+    /* ── Session Review ── */
+    .review-section { padding: 22px 22px 0; }
+    .review-section .label { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; display: block; }
+    .review-item {
+      padding: 12px 0; border-bottom: 1px solid var(--rule-f);
+      display: grid; grid-template-columns: 20px 1fr; gap: 0 10px;
+    }
+    .review-item:last-child { border-bottom: none; }
+    .review-num { font-family: var(--mono); font-size: 9px; color: var(--muted); padding-top: 2px; }
+    .review-body {}
+    .review-q { font-family: var(--serif); font-size: 13px; color: var(--text); line-height: 1.4; margin-bottom: 5px; }
+    .review-stamp {
+      display: inline-block; font-family: var(--mono); font-size: 8px;
+      letter-spacing: 1px; text-transform: uppercase; padding: 1px 6px;
+      border: 1px solid; margin-bottom: 5px;
+    }
+    .review-stamp.correct { color: var(--good); border-color: var(--good); }
+    .review-stamp.incorrect { color: var(--warn); border-color: var(--warn); }
+    .review-stamp.self-eval { color: var(--gold); border-color: var(--gold); }
+    .review-you-said { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+    .review-answers { font-family: var(--serif); font-size: 12px; font-style: italic; color: var(--text-dim); line-height: 1.5; }
+
     .achievements-section { padding: 14px 22px 0; }
     .achievement-chips { display: flex; flex-wrap: wrap; gap: 6px; }
     .achievement-chip {
@@ -844,6 +866,11 @@
       <div class="achievement-chips" id="achievement-chips"></div>
     </div>
 
+    <div class="review-section" id="review-section" style="display:none;">
+      <span class="label">Question Review</span>
+      <div id="review-list"></div>
+    </div>
+
     <div class="btn-row">
       <button class="btn btn-primary" onclick="showHome()">New Session</button>
       <button class="btn btn-ghost" onclick="showAnalytics()">The Record</button>
@@ -1234,6 +1261,7 @@ let state = {
   lastAnswerMs: null,
   newAchievements: [],
   audioCtx: null,
+  sessionLog: [],
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -2024,6 +2052,8 @@ function showResult(correct, transcript, q) {
 
   showScreen('result-screen');
   state.currentIdx++;
+  // Log for end-of-session review
+  state.sessionLog.push({ q, correct, transcript });
 }
 
 function nextQuestion() {
@@ -2331,6 +2361,32 @@ showComplete = function() {
     } else {
       vEl.textContent = `You answered ${state.correct} of ${total} correctly.`;
     }
+  }
+
+  // Render session review
+  const reviewSection = document.getElementById('review-section');
+  const reviewList = document.getElementById('review-list');
+  if (reviewSection && reviewList && state.sessionLog.length) {
+    reviewList.innerHTML = state.sessionLog.map((entry, i) => {
+      const { q, correct, transcript } = entry;
+      const stampClass = correct === true ? 'correct' : correct === false ? 'incorrect' : 'self-eval';
+      const stampText  = correct === true ? 'Correct' : correct === false ? 'Incorrect' : 'Self-Eval';
+      const answersDisplay = q.selfEval ? '' : q.a.slice(0, 5).map(a => a.replace(/\b\w/g, c => c.toUpperCase())).join(' · ') + (q.a.length > 5 ? ` +${q.a.length - 5} more` : '');
+      const youSaid = (transcript && transcript !== '(nothing detected)' && transcript !== '(self-evaluated)')
+        ? `<div class="review-you-said">You said: "${transcript}"</div>` : '';
+      return `<div class="review-item">
+        <div class="review-num">${String(i + 1).padStart(2, '0')}</div>
+        <div class="review-body">
+          <div class="review-q">${q.q}</div>
+          <span class="review-stamp ${stampClass}">${stampText}</span>
+          ${youSaid}
+          ${answersDisplay ? `<div class="review-answers">${answersDisplay}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    reviewSection.style.display = '';
+  } else if (reviewSection) {
+    reviewSection.style.display = 'none';
   }
 };
 
